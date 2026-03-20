@@ -36,6 +36,12 @@
         #settings-panel.open { transform: translateX(0); }
         #settings-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; }
         #settings-overlay.open { opacity: 1; pointer-events: auto; }
+
+        /* Mobile nav drawer */
+        #mobile-nav { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
+        #mobile-nav.open { transform: translateX(0); }
+        #mobile-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; }
+        #mobile-overlay.open { opacity: 1; pointer-events: auto; }
         
         /* Toggle Switch Styling */
         .toggle-checkbox:checked { right: 0; border-color: #14b8a6; }
@@ -123,6 +129,58 @@
         </div>
     </div>
 
+    <!-- Mobile nav overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-black/60 z-[80] md:hidden" onclick="closeMobileNav()"></div>
+
+    <!-- Mobile nav drawer -->
+    <div id="mobile-nav" class="fixed top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between z-[85] md:hidden">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-slate-800 justify-between">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold tracking-tight text-white">Nexum<span class="text-teal-500">.</span></span>
+                    <span class="ml-2 px-2 py-0.5 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase">Partner portal</span>
+                </div>
+                <button onclick="closeMobileNav()" class="text-slate-400 hover:text-white ml-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <nav class="mt-6 flex flex-col">
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Commercie</p>
+                <button onclick="switchView('auction'); closeMobileNav()" class="nav-item nav-active flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-gavel w-6"></i> Live aanvragen
+                </button>
+                <button onclick="switchView('portfolio'); closeMobileNav()" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-chart-pie w-6"></i> Mijn portfolio
+                </button>
+                <button onclick="switchView('strategy'); closeMobileNav()" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-sliders w-6"></i> Biedingsstrategie
+                </button>
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mt-8 mb-2">Management</p>
+                <button onclick="switchView('cfo'); closeMobileNav()" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-calculator w-6"></i> CFO calculator
+                </button>
+                <button onclick="switchView('compliance'); closeMobileNav()" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-shield-halved w-6"></i> Compliance & audit
+                </button>
+                <button onclick="switchView('api'); closeMobileNav()" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-code w-6"></i> API & webhooks
+                </button>
+            </nav>
+        </div>
+        <div class="px-4 pb-2">
+            <a href="index.html" class="flex items-center gap-2 text-xs text-slate-500 hover:text-teal-400 transition py-2 no-underline">
+                <i class="fa-solid fa-arrow-left text-[10px]"></i> Terug naar overzicht
+            </a>
+        </div>
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded bg-orange-600 flex items-center justify-center font-bold text-white text-sm">ING</div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-white">ING Hypotheken</p>
+                    <p class="text-xs text-slate-400">Acceptatie desk</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Sidebar / Navigatie -->
     <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex z-20 relative">
         <div>
@@ -177,10 +235,14 @@
     <div class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-950">
         
         <!-- Topbar -->
-        <header class="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 lg:px-10 z-10 relative">
-            <div class="flex items-center">
-                <div class="w-2 h-2 rounded-full bg-teal-500 pulse-dot mr-2"></div>
-                <span class="text-sm text-slate-400 font-medium">Systeem status: <span class="text-teal-500">Operationeel</span> (14 ms latency)</span>
+        <header class="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 lg:px-10 z-10 relative">
+            <div class="flex items-center gap-3">
+                <button onclick="openMobileNav()" class="md:hidden text-slate-400 hover:text-white p-1 -ml-1" aria-label="Menu openen">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <div class="w-2 h-2 rounded-full bg-teal-500 pulse-dot mr-1 hidden sm:block"></div>
+                <span class="text-sm text-slate-400 font-medium hidden sm:block">Systeem status: <span class="text-teal-500">Operationeel</span> <span class="hidden lg:inline">(14 ms latency)</span></span>
+                <span class="text-sm text-teal-500 font-medium sm:hidden">Nexum<span class="text-white">.</span></span>
             </div>
             <div class="flex items-center space-x-4">
                 <button class="text-slate-400 hover:text-white"><i class="fa-regular fa-bell"></i></button>
@@ -209,7 +271,8 @@
                 </div>
 
                 <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden shadow-xl">
-                    <table class="w-full text-left border-collapse">
+                    <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[640px]">
                         <thead>
                             <tr class="bg-slate-800/50 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-800">
                                 <th class="p-4 font-semibold">Object token (API link)</th>
@@ -224,6 +287,7 @@
                             <!-- Injected by JavaScript -->
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
 
@@ -235,7 +299,7 @@
                 </div>
 
                 <!-- Top KPI Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                     <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
                         <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Total volume (YTD)</p>
                         <p class="text-2xl font-bold text-white">€ 428,5 mln</p>
@@ -307,7 +371,7 @@
 
                         <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg">
                             <h3 class="text-lg font-bold text-white mb-4">Kortingen & opslagen (Modifiers)</h3>
-                            <table class="w-full text-left text-sm text-slate-300">
+                            <div class="overflow-x-auto"><table class="w-full text-left text-sm text-slate-300 min-w-[400px]">
                                 <thead>
                                     <tr class="border-b border-slate-800 text-slate-500">
                                         <th class="pb-2 font-medium">Voorwaarde</th>
@@ -337,7 +401,7 @@
                                         <td class="py-3 text-right"><input type="checkbox" checked class="accent-teal-500 w-4 h-4 cursor-pointer"></td>
                                     </tr>
                                 </tbody>
-                            </table>
+                            </table></div>
                         </div>
                     </div>
 
@@ -573,7 +637,7 @@
                         <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg">
                             <h3 class="font-bold text-white mb-4 border-b border-slate-800 pb-2">Geconfigureerde webhooks</h3>
                             <p class="text-sm text-slate-400 mb-4">Ontvang realtime HTTP POST requests wanneer er acties gebeuren op het netwerk.</p>
-                            <table class="w-full text-left text-sm text-slate-300">
+                            <div class="overflow-x-auto"><table class="w-full text-left text-sm text-slate-300 min-w-[400px]">
                                 <thead><tr class="border-b border-slate-800"><th class="pb-2">Event trigger</th><th class="pb-2">Destination URL</th><th class="pb-2">Status</th></tr></thead>
                                 <tbody>
                                     <tr class="border-b border-slate-800/50">
@@ -587,7 +651,7 @@
                                         <td class="py-3"><span class="text-green-400"><i class="fa-solid fa-check-circle"></i> Active</span></td>
                                     </tr>
                                 </tbody>
-                            </table>
+                            </table></div>
                         </div>
                     </div>
 
@@ -804,6 +868,16 @@
 
         inpVolume.addEventListener('input', updateCalculator);
         inpCost.addEventListener('input', updateCalculator);
+
+        // Mobile nav
+        function openMobileNav() {
+            document.getElementById('mobile-nav').classList.add('open');
+            document.getElementById('mobile-overlay').classList.add('open');
+        }
+        function closeMobileNav() {
+            document.getElementById('mobile-nav').classList.remove('open');
+            document.getElementById('mobile-overlay').classList.remove('open');
+        }
 
     </script>
 </body>

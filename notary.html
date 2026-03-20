@@ -18,6 +18,7 @@
         .nav-active { background-color: #1e293b; border-left-color: #6366f1; color: #6366f1; }
         
         .kanban-col { background: #1e293b; border: 1px solid #334155; border-radius: 12px; display: flex; flex-direction: column; height: calc(100vh - 180px); }
+        @media (max-width: 768px) { .kanban-col { height: auto; min-height: 280px; } }
         .kanban-header { padding: 15px; font-weight: 600; border-bottom: 1px solid #334155; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
         .kanban-body { padding: 15px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 15px; }
         
@@ -29,6 +30,12 @@
         #settings-panel.open { transform: translateX(0); }
         #settings-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; }
         #settings-overlay.open { opacity: 1; pointer-events: auto; }
+
+        /* Mobile nav drawer */
+        #mobile-nav { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
+        #mobile-nav.open { transform: translateX(0); }
+        #mobile-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; }
+        #mobile-overlay.open { opacity: 1; pointer-events: auto; }
         
         /* Toggle Switch Styling */
         .toggle-checkbox:checked { right: 0; border-color: #6366f1; }
@@ -110,6 +117,56 @@
         </div>
     </div>
 
+    <!-- Mobile nav overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-black/60 z-[80] md:hidden" onclick="closeMobileNav()"></div>
+
+    <!-- Mobile nav drawer -->
+    <div id="mobile-nav" class="fixed top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between z-[85] md:hidden">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-slate-800 justify-between">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold tracking-tight text-white">Nexum<span class="text-teal-500">.</span></span>
+                    <span class="ml-2 px-2 py-0.5 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase">Notary</span>
+                </div>
+                <button onclick="closeMobileNav()" class="text-slate-400 hover:text-white ml-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <nav class="mt-6 flex flex-col">
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Workflow</p>
+                <button onclick="switchView('dossiers'); closeMobileNav()" class="nav-item nav-active flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-layer-group w-6"></i> Dossier pipeline
+                </button>
+                <button onclick="switchView('templates'); closeMobileNav()" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-file-code w-6"></i> Smart templates
+                </button>
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mt-8 mb-2">Management</p>
+                <button onclick="switchView('performance'); closeMobileNav()" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-chart-line w-6"></i> Kantoor prestaties
+                </button>
+                <button onclick="switchView('billing'); closeMobileNav()" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-file-invoice-dollar w-6"></i> Facturatie
+                </button>
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mt-8 mb-2">Blockchain</p>
+                <button onclick="switchView('sync'); closeMobileNav()" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-cube w-6"></i> Kadaster sync
+                </button>
+            </nav>
+        </div>
+        <div class="px-4 pb-2">
+            <a href="index.html" class="flex items-center gap-2 text-xs text-slate-500 hover:text-teal-400 transition py-2 no-underline">
+                <i class="fa-solid fa-arrow-left text-[10px]"></i> Terug naar overzicht
+            </a>
+        </div>
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded bg-slate-700 flex items-center justify-center font-bold text-white text-sm"><i class="fa-solid fa-scale-balanced"></i></div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-white">Van Doorne N.V.</p>
+                    <p class="text-xs text-indigo-400">Notariaat vastgoed</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Sidebar -->
     <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex z-20">
         <div>
@@ -160,9 +217,16 @@
 
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-950">
-        <header class="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 lg:px-10 z-10">
-            <div class="flex items-center text-sm text-slate-400">
-                <i class="fa-solid fa-shield-halved text-indigo-500 mr-2"></i> KNB netwerk: <span class="text-white ml-1">Actief & beveiligd</span>
+        <header class="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 lg:px-10 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="openMobileNav()" class="md:hidden text-slate-400 hover:text-white p-1 -ml-1" aria-label="Menu openen">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <div class="flex items-center text-sm text-slate-400">
+                    <i class="fa-solid fa-shield-halved text-indigo-500 mr-2 hidden sm:inline"></i>
+                    <span class="hidden sm:inline">KNB netwerk: <span class="text-white ml-1">Actief & beveiligd</span></span>
+                    <span class="text-indigo-400 font-medium sm:hidden">Nexum Notary</span>
+                </div>
             </div>
             <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-gear text-lg"></i></button>
         </header>
@@ -363,7 +427,7 @@
 
             <!-- VIEW 4: BILLING / FACTURATIE -->
             <div id="view-billing" class="hidden animate-[fadeIn_0.3s_ease-out]">
-                <div class="mb-8 flex justify-between items-end">
+                <div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
                     <div>
                         <h1 class="text-2xl font-bold text-white mb-1">Facturatie & afdrachten</h1>
                         <p class="text-sm text-slate-400">Overzicht van uw kantooromzet en de Nexum service fee afdrachten.</p>
@@ -397,7 +461,7 @@
                     <div class="p-6 border-b border-slate-800">
                         <h3 class="text-lg font-bold text-white">Recente transacties</h3>
                     </div>
-                    <table class="w-full text-left border-collapse">
+                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse min-w-[640px]">
                         <thead>
                             <tr class="bg-slate-800/50 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-800">
                                 <th class="p-4 font-semibold">Datum</th>
@@ -442,13 +506,13 @@
                                 <td class="p-4 text-right"><span class="px-2 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded text-xs font-bold">Voldaan</span></td>
                             </tr>
                         </tbody>
-                    </table>
+                    </table></div>
                 </div>
             </div>
-            
+
             <!-- VIEW 5: KADASTER SYNC -->
             <div id="view-sync" class="hidden animate-[fadeIn_0.3s_ease-out]">
-                <div class="mb-8 flex justify-between items-end">
+                <div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
                     <div>
                         <h1 class="text-2xl font-bold text-white mb-1">Blockchain oracle & kadaster sync</h1>
                         <p class="text-sm text-slate-400">Monitor de status van gepasseerde akten en hun verankering op de Ethereum ledger.</p>
@@ -494,7 +558,7 @@
                     <div class="p-6 border-b border-slate-800">
                         <h3 class="text-lg font-bold text-white">Recente mutaties (Smart contracts)</h3>
                     </div>
-                    <table class="w-full text-left border-collapse">
+                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse min-w-[600px]">
                         <thead>
                             <tr class="bg-slate-800/50 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-800">
                                 <th class="p-4 font-semibold">Tijdstip</th>
@@ -534,7 +598,7 @@
                                 <td class="p-4 text-right"><span class="text-green-400"><i class="fa-solid fa-check-double mr-1"></i> Verankerd</span></td>
                             </tr>
                         </tbody>
-                    </table>
+                    </table></div>
                 </div>
             </div>
 
@@ -614,6 +678,16 @@
                     }
                 }
             });
+        }
+
+        // Mobile nav
+        function openMobileNav() {
+            document.getElementById('mobile-nav').classList.add('open');
+            document.getElementById('mobile-overlay').classList.add('open');
+        }
+        function closeMobileNav() {
+            document.getElementById('mobile-nav').classList.remove('open');
+            document.getElementById('mobile-overlay').classList.remove('open');
         }
     </script>
 </body>

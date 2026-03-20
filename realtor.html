@@ -28,6 +28,12 @@
         #settings-panel.open { transform: translateX(0); }
         #settings-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; }
         #settings-overlay.open { opacity: 1; pointer-events: auto; }
+
+        /* Mobile nav drawer */
+        #mobile-nav { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
+        #mobile-nav.open { transform: translateX(0); }
+        #mobile-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; }
+        #mobile-overlay.open { opacity: 1; pointer-events: auto; }
         
         /* Toggle Switch Styling */
         .toggle-checkbox:checked { right: 0; border-color: #3b82f6; }
@@ -126,6 +132,55 @@
         </div>
     </div>
 
+    <!-- Mobile nav overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-black/60 z-[80] md:hidden" onclick="closeMobileNav()"></div>
+
+    <!-- Mobile nav drawer -->
+    <div id="mobile-nav" class="fixed top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between z-[85] md:hidden">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-slate-800 justify-between">
+                <div class="flex items-center">
+                    <span class="text-2xl font-bold tracking-tight text-white">Nexum<span class="text-teal-500">.</span></span>
+                    <span class="ml-2 px-2 py-0.5 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase">Agent portal</span>
+                </div>
+                <button onclick="closeMobileNav()" class="text-slate-400 hover:text-white ml-2"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <nav class="mt-6 flex flex-col">
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Activity</p>
+                <button onclick="switchView('tasks'); closeMobileNav()" class="nav-item nav-active flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-list-check w-6"></i> Tasks
+                </button>
+                <button onclick="switchView('aankoop'); closeMobileNav()" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-house-user w-6"></i> Aankoopdossiers
+                </button>
+                <button onclick="switchView('verkoop'); closeMobileNav()" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-sign w-6"></i> Verkoopdossiers
+                </button>
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mt-8 mb-2">Kantoor</p>
+                <button onclick="switchView('performance'); closeMobileNav()" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-ranking-star w-6"></i> Performance
+                </button>
+                <button onclick="switchView('finance'); closeMobileNav()" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-file-invoice-dollar w-6"></i> Finance & facturatie
+                </button>
+            </nav>
+        </div>
+        <div class="px-4 pb-2">
+            <a href="index.html" class="flex items-center gap-2 text-xs text-slate-500 hover:text-teal-400 transition py-2 no-underline">
+                <i class="fa-solid fa-arrow-left text-[10px]"></i> Terug naar overzicht
+            </a>
+        </div>
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded bg-slate-700 flex items-center justify-center font-bold text-white text-sm"><i class="fa-solid fa-user-tie"></i></div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-white">Janssen makelaardij</p>
+                    <p class="text-xs text-blue-400 font-bold"><i class="fa-solid fa-medal mr-1"></i>Gold partner</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Sidebar / Navigatie -->
     <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex z-20">
         <div>
@@ -174,9 +229,16 @@
 
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-950">
-        <header class="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 lg:px-10 z-10">
-            <div class="flex items-center text-sm text-slate-400">
-                <i class="fa-solid fa-link text-blue-500 mr-2"></i> CRM sync: <span class="text-white ml-1">Realworks (actief)</span>
+        <header class="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 lg:px-10 z-10">
+            <div class="flex items-center gap-3">
+                <button onclick="openMobileNav()" class="md:hidden text-slate-400 hover:text-white p-1 -ml-1" aria-label="Menu openen">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <div class="flex items-center text-sm text-slate-400">
+                    <i class="fa-solid fa-link text-blue-500 mr-2 hidden sm:inline"></i>
+                    <span class="hidden sm:inline">CRM sync: <span class="text-white ml-1">Realworks (actief)</span></span>
+                    <span class="text-blue-400 font-medium sm:hidden">Nexum Agent</span>
+                </div>
             </div>
             <div class="flex items-center space-x-4">
                 <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-gear text-lg"></i></button>
@@ -187,7 +249,7 @@
             
             <!-- VIEW 1: TASKS (Dashboard & Werkvoorraad) -->
             <div id="view-tasks" class="block fade-in">
-                <div class="mb-8 flex justify-between items-end">
+                <div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
                     <div>
                         <h1 class="text-2xl font-bold text-white mb-1">Tasks</h1>
                         <p class="text-sm text-slate-400">Uw actieve dossiers gesorteerd op urgentie en actievereiste.</p>
@@ -196,12 +258,12 @@
                 </div>
 
                 <div class="bg-slate-900 rounded-xl border border-slate-800 shadow-lg overflow-hidden">
-                    <div class="p-4 border-b border-slate-800 bg-slate-800/30 flex gap-4">
+                    <div class="p-4 border-b border-slate-800 bg-slate-800/30 flex flex-wrap gap-2">
                         <button id="filter-btn-all" onclick="filterTasks('all')" class="task-filter-btn px-4 py-1.5 bg-slate-700 text-white rounded text-sm font-medium transition">Alle taken (10)</button>
                         <button id="filter-btn-aankoop" onclick="filterTasks('aankoop')" class="task-filter-btn px-4 py-1.5 text-slate-400 hover:text-white rounded text-sm font-medium transition">Aankoop (4)</button>
                         <button id="filter-btn-verkoop" onclick="filterTasks('verkoop')" class="task-filter-btn px-4 py-1.5 text-slate-400 hover:text-white rounded text-sm font-medium transition">Verkoop (6)</button>
                     </div>
-                    <table class="w-full text-left border-collapse">
+                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse min-w-[600px]">
                         <thead>
                             <tr class="text-xs uppercase tracking-wider text-slate-500 border-b border-slate-800">
                                 <th class="p-4 font-semibold w-24">Type</th>
@@ -293,7 +355,7 @@
                                 <td class="p-4 text-right"><button onclick="switchView('aankoop')" class="bg-slate-700 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-600 border border-slate-600">Bekijk details</button></td>
                             </tr>
                         </tbody>
-                    </table>
+                    </table></div>
                 </div>
             </div>
 
@@ -384,7 +446,7 @@
                     </div>
                 </div>
 
-                <div class="mb-8 flex justify-between items-end">
+                <div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
                     <div>
                         <h1 class="text-2xl font-bold text-white mb-1">Verkoopdossiers</h1>
                         <p class="text-sm text-slate-400">Uw objecten in de verkoop en token-beheer.</p>
@@ -533,7 +595,7 @@
 
             <!-- VIEW 7: FINANCE & FACTURATIE -->
             <div id="view-finance" class="hidden fade-in">
-                <div class="mb-8 flex justify-between items-end">
+                <div class="mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
                     <div>
                         <h1 class="text-2xl font-bold text-white mb-1">Finance & facturatie</h1>
                         <p class="text-sm text-slate-400">Financieel overzicht, verwachte courtages en Nexum platformkosten.</p>
@@ -822,6 +884,16 @@
         document.addEventListener('DOMContentLoaded', () => {
             switchView('tasks');
         });
+
+        // Mobile nav
+        function openMobileNav() {
+            document.getElementById('mobile-nav').classList.add('open');
+            document.getElementById('mobile-overlay').classList.add('open');
+        }
+        function closeMobileNav() {
+            document.getElementById('mobile-nav').classList.remove('open');
+            document.getElementById('mobile-overlay').classList.remove('open');
+        }
     </script>
 </body>
 </html>
