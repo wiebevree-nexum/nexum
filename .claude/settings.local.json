@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp \"Nexum_demo\\(1\\).html\" consumer.html)",
+      "Bash(cp \"Nexum_Banking_portal_final.html\" banking.html)",
+      "Bash(cp \"Nexum_Notary_Final.html\" notary.html)",
+      "Bash(cp \"Nexum_Realtor_Final.html\" realtor.html)",
+      "Bash(rm \"Nexum_Consumer_Final.html\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npx --version)",
+      "Bash(gh repo:*)",
+      "Bash(brew list:*)",
+      "Bash(brew --version)"
+    ]
+  }
+}

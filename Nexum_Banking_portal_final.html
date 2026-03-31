@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexum bank portal | Partner backend</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        
+        .nav-item { transition: all 0.2s; border-left: 3px solid transparent; }
+        .nav-item:hover { background-color: #1e293b; border-left-color: #3b82f6; }
+        .nav-active { background-color: #1e293b; border-left-color: #14b8a6; color: #14b8a6; }
+        
+        /* Range slider styling */
+        input[type=range] { -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #14b8a6; cursor: pointer; margin-top: -6px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #334155; border-radius: 2px; }
+
+        .pulse-dot { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(20, 184, 166, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); } }
+
+        .flash-row { animation: flashRow 2s ease-out forwards; }
+        @keyframes flashRow { 0% { background-color: rgba(20, 184, 166, 0.3); } 100% { background-color: transparent; } }
+
+        /* Slide-over settings panel */
+        #settings-panel { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
+        #settings-panel.open { transform: translateX(0); }
+        #settings-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; }
+        #settings-overlay.open { opacity: 1; pointer-events: auto; }
+        
+        /* Toggle Switch Styling */
+        .toggle-checkbox:checked { right: 0; border-color: #14b8a6; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #14b8a6; }
+        .toggle-checkbox { right: 0; z-index: 1; border-color: #e2e8f0; transition: all 0.3s; }
+        .toggle-label { width: 2.5rem; height: 1.25rem; background-color: #334155; border-radius: 9999px; transition: all 0.3s; cursor: pointer; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Settings Overlay & Panel -->
+    <div id="settings-overlay" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-[90]" onclick="toggleSettings()"></div>
+    <div id="settings-panel" class="fixed top-0 right-0 h-full w-full sm:w-96 bg-slate-900 border-l border-slate-800 z-[100] flex flex-col shadow-2xl">
+        <div class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900">
+            <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-sliders text-teal-500 mr-2"></i> Platform instellingen</h2>
+            <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-8">
+            <!-- Sectie 1 -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Manager notificaties</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">Portfolio targets (Fair share)</p>
+                            <p class="text-xs text-slate-500">Krijg bericht als Tier C targets achterlopen</p>
+                        </div>
+                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                            <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">Compliance & red flags</p>
+                            <p class="text-xs text-slate-500">Directe mail bij een fraude of AML detectie</p>
+                        </div>
+                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                            <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">Wekelijkse CFO rapportage</p>
+                            <p class="text-xs text-slate-500">Ontvang KPI's en gerealiseerde besparingen</p>
+                        </div>
+                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                            <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Sectie 2 -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">API & Systeem</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">Testomgeving (Sandbox)</p>
+                            <p class="text-xs text-slate-500">Stuur dummy biedingen via de API</p>
+                        </div>
+                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                            <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Sectie 3 -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Accountbeveiliging</h3>
+                <div class="p-4 bg-slate-800 rounded-lg border border-slate-700 text-sm">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-slate-300">Twee-staps verificatie (2FA)</span>
+                        <span class="text-green-400 font-bold text-xs"><i class="fa-solid fa-check mr-1"></i>Actief</span>
+                    </div>
+                    <button class="text-teal-400 hover:underline text-xs mt-1">Beheer apparaten</button>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 border-t border-slate-800 bg-slate-900">
+            <button onclick="toggleSettings()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-bold border border-slate-700 transition">Sluiten</button>
+        </div>
+    </div>
+
+    <!-- Sidebar / Navigatie -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex z-20 relative">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-slate-800">
+                <span class="text-2xl font-bold tracking-tight text-white">Nexum<span class="text-teal-500">.</span></span>
+                <span class="ml-2 px-2 py-0.5 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase">Partner portal</span>
+            </div>
+            
+            <nav class="mt-6 flex flex-col">
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Commercie</p>
+                <button onclick="switchView('auction')" id="nav-auction" class="nav-item nav-active flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-gavel w-6"></i> Live aanvragen
+                    <span id="auction-badge" class="ml-auto bg-teal-500 text-slate-900 py-0.5 px-2 rounded-full text-[10px] font-bold hidden">Nieuw</span>
+                </button>
+                <button onclick="switchView('portfolio')" id="nav-portfolio" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-chart-pie w-6"></i> Mijn portfolio
+                </button>
+                <button onclick="switchView('strategy')" id="nav-strategy" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-sliders w-6"></i> Biedingsstrategie
+                </button>
+                
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mt-8 mb-2">Management</p>
+                <button onclick="switchView('cfo')" id="nav-cfo" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-calculator w-6"></i> CFO calculator
+                </button>
+                <button onclick="switchView('compliance')" id="nav-compliance" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-shield-halved w-6"></i> Compliance & audit
+                </button>
+                <button onclick="switchView('api')" id="nav-api" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-code w-6"></i> API & webhooks
+                </button>
+            </nav>
+        </div>
+        
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded bg-orange-600 flex items-center justify-center font-bold text-white text-sm">ING</div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-white">ING Hypotheken</p>
+                    <p class="text-xs text-slate-400">Acceptatie desk</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-950">
+        
+        <!-- Topbar -->
+        <header class="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 lg:px-10 z-10 relative">
+            <div class="flex items-center">
+                <div class="w-2 h-2 rounded-full bg-teal-500 pulse-dot mr-2"></div>
+                <span class="text-sm text-slate-400 font-medium">Systeem status: <span class="text-teal-500">Operationeel</span> (14 ms latency)</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="text-slate-400 hover:text-white"><i class="fa-regular fa-bell"></i></button>
+                <button onclick="toggleSettings()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-gear"></i></button>
+            </div>
+        </header>
+
+        <!-- Dynamic View Container -->
+        <main class="flex-1 overflow-y-auto p-6 lg:p-10" id="main-content">
+            
+            <!-- VIEW 1: LIVE AANVRAGEN -->
+            <div id="view-auction" class="block animate-[fadeIn_0.3s_ease-out]">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-8 gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white mb-1">Live hypotheekaanvragen</h1>
+                        <p class="text-sm text-slate-400">Volledig geverifieerde dossiers (Nexum KYC) klaar voor direct aanbod.</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="btn-start-sim" onclick="startAuctionSim()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-teal-400 text-sm font-bold rounded-lg border border-slate-700 transition flex items-center">
+                            <i class="fa-solid fa-play mr-2"></i> Start simulatie
+                        </button>
+                        <button onclick="switchView('strategy')" class="px-4 py-2 bg-teal-600 text-white text-sm font-bold rounded-lg hover:bg-teal-500 shadow-lg shadow-teal-500/20 flex items-center">
+                            <i class="fa-solid fa-robot mr-2"></i> Auto-bidding (Aan)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden shadow-xl">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-800/50 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-800">
+                                <th class="p-4 font-semibold">Object token (API link)</th>
+                                <th class="p-4 font-semibold">Koper data (Ockto)</th>
+                                <th class="p-4 font-semibold">Risico score</th>
+                                <th class="p-4 font-semibold">LTV ratio</th>
+                                <th class="p-4 font-semibold">Tijd resterend</th>
+                                <th class="p-4 font-semibold text-right">Actie</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auction-table-body" class="text-sm text-slate-300">
+                            <!-- Injected by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VIEW 2: MIJN PORTFOLIO (DASHBOARD) -->
+            <div id="view-portfolio" class="hidden animate-[fadeIn_0.3s_ease-out]">
+                <div class="mb-8">
+                    <h1 class="text-2xl font-bold text-white mb-1">Mijn Nexum portfolio</h1>
+                    <p class="text-sm text-slate-400">Macro-analyse van alle via het Nexum platform afgesloten hypotheken.</p>
+                </div>
+
+                <!-- Top KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Total volume (YTD)</p>
+                        <p class="text-2xl font-bold text-white">€ 428,5 mln</p>
+                        <p class="text-xs text-green-400 mt-2"><i class="fa-solid fa-arrow-trend-up mr-1"></i> +12% vs vorig kwartaal</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Gefinancierde objecten</p>
+                        <p class="text-2xl font-bold text-white">1.245</p>
+                        <p class="text-xs text-slate-500 mt-2">100% succesvolle passeer-ratio</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Gemiddelde LTV</p>
+                        <p class="text-2xl font-bold text-white">82,4%</p>
+                        <p class="text-xs text-green-400 mt-2"><i class="fa-solid fa-shield-check mr-1"></i> Veilig profiel</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl border-l-4 border-l-teal-500">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Uitval / Fraude ratio</p>
+                        <p class="text-2xl font-bold text-teal-400">0,00%</p>
+                        <p class="text-xs text-slate-500 mt-2">Dankzij Nexum KYC garanties</p>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl">
+                        <h3 class="text-sm font-bold text-white mb-4">Verdeling risicoprofielen (Tier)</h3>
+                        <div class="relative h-64"><canvas id="chartRisk"></canvas></div>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl">
+                        <h3 class="text-sm font-bold text-white mb-4">Leeftijdsopbouw hypotheekhouders</h3>
+                        <div class="relative h-64"><canvas id="chartAge"></canvas></div>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl">
+                        <h3 class="text-sm font-bold text-white mb-4">Energielabel onderpand</h3>
+                        <div class="relative h-64"><canvas id="chartEnergy"></canvas></div>
+                        <p class="text-xs text-slate-400 mt-4 text-center">Data real-time gehaald uit woning-tokens</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: BIEDINGSSTRATEGIE (AUTO-BIDDER) -->
+            <div id="view-strategy" class="hidden animate-[fadeIn_0.3s_ease-out]">
+                <div class="mb-8">
+                    <h1 class="text-2xl font-bold text-white mb-1">Biedingsstrategie (Auto-bidder)</h1>
+                    <p class="text-sm text-slate-400">Configureer de parameters waarmee het algoritme namens uw bank reageert op live hypotheekaanvragen.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Rente matrix & opslagen -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg">
+                            <h3 class="text-lg font-bold text-white mb-4">Basis rentetarieven</h3>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="p-4 bg-slate-800 rounded-lg border border-slate-700">
+                                    <label class="text-xs text-slate-400 uppercase tracking-widest block mb-2">10 Jaar vast</label>
+                                    <div class="flex items-center"><input type="number" value="3.75" step="0.01" class="w-full bg-slate-950 border border-slate-600 rounded px-3 py-2 text-white font-bold outline-none focus:border-teal-500"><span class="ml-2 text-slate-400">%</span></div>
+                                </div>
+                                <div class="p-4 bg-slate-800 rounded-lg border border-slate-700">
+                                    <label class="text-xs text-slate-400 uppercase tracking-widest block mb-2">20 Jaar vast</label>
+                                    <div class="flex items-center"><input type="number" value="4.10" step="0.01" class="w-full bg-slate-950 border border-slate-600 rounded px-3 py-2 text-white font-bold outline-none focus:border-teal-500"><span class="ml-2 text-slate-400">%</span></div>
+                                </div>
+                                <div class="p-4 bg-slate-800 rounded-lg border border-slate-700">
+                                    <label class="text-xs text-slate-400 uppercase tracking-widest block mb-2">30 Jaar vast</label>
+                                    <div class="flex items-center"><input type="number" value="4.35" step="0.01" class="w-full bg-slate-950 border border-slate-600 rounded px-3 py-2 text-white font-bold outline-none focus:border-teal-500"><span class="ml-2 text-slate-400">%</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg">
+                            <h3 class="text-lg font-bold text-white mb-4">Kortingen & opslagen (Modifiers)</h3>
+                            <table class="w-full text-left text-sm text-slate-300">
+                                <thead>
+                                    <tr class="border-b border-slate-800 text-slate-500">
+                                        <th class="pb-2 font-medium">Voorwaarde</th>
+                                        <th class="pb-2 font-medium">Aanpassing (%)</th>
+                                        <th class="pb-2 font-medium text-right">Actief</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-slate-800/50">
+                                        <td class="py-3">Nationale Hypotheek Garantie (NHG)</td>
+                                        <td class="py-3 text-green-400 font-bold">-0.20%</td>
+                                        <td class="py-3 text-right"><input type="checkbox" checked class="accent-teal-500 w-4 h-4 cursor-pointer"></td>
+                                    </tr>
+                                    <tr class="border-b border-slate-800/50">
+                                        <td class="py-3">LTV < 80% (Veilige inbreng)</td>
+                                        <td class="py-3 text-green-400 font-bold">-0.10%</td>
+                                        <td class="py-3 text-right"><input type="checkbox" checked class="accent-teal-500 w-4 h-4 cursor-pointer"></td>
+                                    </tr>
+                                    <tr class="border-b border-slate-800/50">
+                                        <td class="py-3">Woning energielabel A++ of hoger</td>
+                                        <td class="py-3 text-green-400 font-bold">-0.15%</td>
+                                        <td class="py-3 text-right"><input type="checkbox" checked class="accent-teal-500 w-4 h-4 cursor-pointer"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3">LTI > 95% (Druk op woonquote)</td>
+                                        <td class="py-3 text-red-400 font-bold">+0.25%</td>
+                                        <td class="py-3 text-right"><input type="checkbox" checked class="accent-teal-500 w-4 h-4 cursor-pointer"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Portfolio allocatie (Fair share) -->
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg h-fit">
+                        <h3 class="text-lg font-bold text-white mb-2">Portfolio allocatie</h3>
+                        <p class="text-xs text-slate-400 mb-6 pb-4 border-b border-slate-800">
+                            Stel uw doelen in voor de auto-bidder. Om aan de Nexum <strong>Fair share SLA</strong> te voldoen, zal het algoritme soms pro-actief C-profielen meenemen indien de ondergrens (min. 5%) dreigt te falen.
+                        </p>
+                        
+                        <div class="space-y-5">
+                            <div>
+                                <label class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                                    <span>Tier AAA (Doel: Max 40%)</span>
+                                    <span class="text-teal-400">40%</span>
+                                </label>
+                                <input type="range" min="0" max="100" value="40" class="w-full">
+                            </div>
+                            <div>
+                                <label class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                                    <span>Tier A (Doel: ~35%)</span>
+                                    <span class="text-blue-400">35%</span>
+                                </label>
+                                <input type="range" min="0" max="100" value="35" class="w-full">
+                            </div>
+                            <div>
+                                <label class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                                    <span>Tier B (Doel: ~20%)</span>
+                                    <span class="text-amber-400">20%</span>
+                                </label>
+                                <input type="range" min="0" max="100" value="20" class="w-full">
+                            </div>
+                            <div>
+                                <label class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                                    <span>Tier C (Doel: Min 5%)</span>
+                                    <span class="text-red-400">5%</span>
+                                </label>
+                                <input type="range" min="0" max="100" value="5" class="w-full">
+                                <p class="text-[10px] text-slate-500 mt-1 italic">SLA verplichting gerespecteerd.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-6 border-t border-slate-800">
+                            <button class="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-teal-500/20">Configuratie opslaan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 4: CFO CALCULATOR -->
+            <div id="view-cfo" class="hidden animate-[fadeIn_0.3s_ease-out]">
+                <div class="mb-8">
+                    <h1 class="text-2xl font-bold text-white mb-1"><i class="fa-solid fa-calculator text-teal-500 mr-2"></i>CFO besparingscalculator</h1>
+                    <p class="text-sm text-slate-400">Bereken de operationele impact van het uitbesteden van de hypotheekstraat aan Nexum.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg h-fit">
+                        <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-6">Uw bank parameters</h3>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="flex justify-between text-sm font-medium text-slate-300 mb-2">
+                                    <span>Hypotheken per jaar</span>
+                                    <span id="val-volume" class="text-teal-400 font-bold">20.000</span>
+                                </label>
+                                <input type="range" id="inp-volume" min="1000" max="100000" step="1000" value="20000" class="w-full">
+                            </div>
+                            <div>
+                                <label class="flex justify-between text-sm font-medium text-slate-300 mb-2">
+                                    <span>Huidige KYC & opslagkosten</span>
+                                    <span id="val-cost" class="text-teal-400 font-bold">€ 1.400 / dossier</span>
+                                </label>
+                                <input type="range" id="inp-cost" min="800" max="3000" step="50" value="1400" class="w-full">
+                                <p class="text-[10px] text-slate-500 mt-1">Incl. FTE, faalkosten & cloud/data opslag.</p>
+                            </div>
+                            <div class="pt-6 border-t border-slate-800">
+                                <label class="flex justify-between text-sm font-medium text-slate-300 mb-2">
+                                    <span>Nexum origination fee</span>
+                                    <span class="text-slate-500 font-bold">€ 500 / dossier</span>
+                                </label>
+                                <p class="text-xs text-slate-500">Vast tarief. U betaalt alleen voor afgesloten dossiers, faalkosten zijn voor ons risico.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg">
+                                <p class="text-sm text-slate-400 uppercase tracking-wider font-bold mb-2">Huidige operationele kosten</p>
+                                <p id="out-current" class="text-4xl font-mono text-slate-300">€ 28.000.000</p>
+                                <p class="text-xs text-slate-500 mt-2">Per jaar (schatting o.b.v. input)</p>
+                            </div>
+                            <div class="bg-teal-900/20 rounded-xl border border-teal-500/30 p-6 shadow-lg relative overflow-hidden">
+                                <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fa-solid fa-bolt text-6xl text-teal-400"></i></div>
+                                <p class="text-sm text-teal-500 uppercase tracking-wider font-bold mb-2 relative z-10">Kosten via Nexum rail</p>
+                                <p id="out-nexum" class="text-4xl font-mono text-white font-bold relative z-10">€ 10.000.000</p>
+                                <p class="text-xs text-teal-400/70 mt-2 relative z-10">0% uitval, instant levering.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl border border-slate-700 p-8 shadow-xl flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg text-slate-300 font-medium mb-1">Netto jaarlijkse besparing</h3>
+                                <p class="text-sm text-slate-500">Directe impact op uw bottom-line en FTE-capaciteit.</p>
+                            </div>
+                            <div class="text-right">
+                                <p id="out-savings" class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-blue-500">€ 18.000.000</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg">
+                            <h3 class="text-sm text-slate-300 font-bold mb-4">Kostenvergelijking visualisatie</h3>
+                            <div class="relative h-48 w-full">
+                                <canvas id="cfoChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 5: COMPLIANCE & AUDIT -->
+            <div id="view-compliance" class="hidden animate-[fadeIn_0.3s_ease-out]">
+                <div class="mb-8">
+                    <h1 class="text-2xl font-bold text-white mb-1">Compliance en audit logs</h1>
+                    <p class="text-sm text-slate-400">Transparante toegang tot AML/KYC beslissingen ten behoeve van periodieke DNB-controles en accountantscontroles.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Rapporten & Export -->
+                    <div class="space-y-6">
+                        <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg">
+                            <h3 class="font-bold text-white mb-4">DNB Audit exporter</h3>
+                            <p class="text-xs text-slate-400 mb-6">Genereer een gestandaardiseerd XML/CSV bestand met alle uitgevoerde Wwft-controles van het afgelopen kwartaal.</p>
+                            <div class="space-y-3 mb-6">
+                                <select class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-sm text-slate-300 outline-none">
+                                    <option>Q1 2026 (Huidig)</option>
+                                    <option>Q4 2025</option>
+                                    <option>Q3 2025</option>
+                                </select>
+                            </div>
+                            <button class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded border border-slate-700 transition flex items-center justify-center">
+                                <i class="fa-solid fa-download mr-2"></i> Exporteer data
+                            </button>
+                        </div>
+
+                        <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg">
+                            <h3 class="font-bold text-white mb-4">Recente kwartaalrapporten</h3>
+                            <ul class="space-y-3 text-sm text-slate-300">
+                                <li class="flex items-center justify-between p-2 hover:bg-slate-800 rounded cursor-pointer transition">
+                                    <span class="flex items-center"><i class="fa-regular fa-file-pdf text-red-400 mr-3 text-lg"></i> CDD_Report_Q4_2025.pdf</span>
+                                    <i class="fa-solid fa-arrow-down text-slate-500"></i>
+                                </li>
+                                <li class="flex items-center justify-between p-2 hover:bg-slate-800 rounded cursor-pointer transition">
+                                    <span class="flex items-center"><i class="fa-regular fa-file-pdf text-red-400 mr-3 text-lg"></i> CDD_Report_Q3_2025.pdf</span>
+                                    <i class="fa-solid fa-arrow-down text-slate-500"></i>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Red Flags Tabel -->
+                    <div class="lg:col-span-2 bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg overflow-hidden flex flex-col">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-white">Incidenten & red flags logboek</h3>
+                            <span class="bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1 rounded-full text-xs font-bold">14 geweigerd deze maand</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-4">Onderstaand logboek toont geanonimiseerde dossiers die door de Nexum-engine zijn geblokkeerd voordat ze de veiling bereikten.</p>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-slate-300">
+                                <thead>
+                                    <tr class="border-b border-slate-800 text-slate-500">
+                                        <th class="pb-3 font-medium">Datum</th>
+                                        <th class="pb-3 font-medium">Event ID (Hash)</th>
+                                        <th class="pb-3 font-medium">Detectie reden</th>
+                                        <th class="pb-3 font-medium">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-slate-800/50">
+                                        <td class="py-3">10-03-2026</td>
+                                        <td class="py-3 font-mono text-xs">0x8a1b...c9f2</td>
+                                        <td class="py-3">Inkomensfraude (PDF mismatch vs UWV data)</td>
+                                        <td class="py-3"><span class="text-red-400 font-medium"><i class="fa-solid fa-ban mr-1"></i> Hard block</span></td>
+                                    </tr>
+                                    <tr class="border-b border-slate-800/50">
+                                        <td class="py-3">08-03-2026</td>
+                                        <td class="py-3 font-mono text-xs">0x3f2d...e1a4</td>
+                                        <td class="py-3">PEP hit (Politically Exposed Person database)</td>
+                                        <td class="py-3"><span class="text-amber-400 font-medium"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Handmatige review</span></td>
+                                    </tr>
+                                    <tr class="border-b border-slate-800/50">
+                                        <td class="py-3">05-03-2026</td>
+                                        <td class="py-3 font-mono text-xs">0x7c9a...b2d5</td>
+                                        <td class="py-3">Liveness check gefaald (Deepfake gedetecteerd)</td>
+                                        <td class="py-3"><span class="text-red-400 font-medium"><i class="fa-solid fa-ban mr-1"></i> Hard block</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 6: API & WEBHOOKS -->
+            <div id="view-api" class="hidden animate-[fadeIn_0.3s_ease-out]">
+                <div class="mb-8">
+                    <h1 class="text-2xl font-bold text-white mb-1">Ontwikkelaars & integraties</h1>
+                    <p class="text-sm text-slate-400">Koppel Nexum direct aan uw core banking systeem (bijv. Ohpen of SAP Fioneer) voor een straight-through-processing (STP) ervaring.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg">
+                            <h3 class="font-bold text-white mb-4 border-b border-slate-800 pb-2">Actieve REST API endpoints</h3>
+                            <div class="space-y-4 font-mono text-sm">
+                                <div class="p-3 bg-slate-950 rounded border border-slate-800 flex items-center justify-between">
+                                    <div><span class="text-green-400 font-bold mr-3">GET</span><span class="text-slate-300">/api/v1/auctions/active</span></div>
+                                    <span class="text-xs text-slate-500 font-sans">Haal alle actieve geanonimiseerde dossiers op</span>
+                                </div>
+                                <div class="p-3 bg-slate-950 rounded border border-slate-800 flex items-center justify-between">
+                                    <div><span class="text-blue-400 font-bold mr-3">POST</span><span class="text-slate-300">/api/v1/bids/submit</span></div>
+                                    <span class="text-xs text-slate-500 font-sans">Dien programmatisch een rente-bod in</span>
+                                </div>
+                                <div class="p-3 bg-slate-950 rounded border border-slate-800 flex items-center justify-between">
+                                    <div><span class="text-green-400 font-bold mr-3">GET</span><span class="text-slate-300">/api/v1/dossier/{id}/export</span></div>
+                                    <span class="text-xs text-slate-500 font-sans">Download JSON dossier na gunning</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg">
+                            <h3 class="font-bold text-white mb-4 border-b border-slate-800 pb-2">Geconfigureerde webhooks</h3>
+                            <p class="text-sm text-slate-400 mb-4">Ontvang realtime HTTP POST requests wanneer er acties gebeuren op het netwerk.</p>
+                            <table class="w-full text-left text-sm text-slate-300">
+                                <thead><tr class="border-b border-slate-800"><th class="pb-2">Event trigger</th><th class="pb-2">Destination URL</th><th class="pb-2">Status</th></tr></thead>
+                                <tbody>
+                                    <tr class="border-b border-slate-800/50">
+                                        <td class="py-3 font-mono text-teal-400">auction.won</td>
+                                        <td class="py-3">https://api.ing.nl/nexum/ingest</td>
+                                        <td class="py-3"><span class="text-green-400"><i class="fa-solid fa-check-circle"></i> Active</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 font-mono text-teal-400">kyc.flag.raised</td>
+                                        <td class="py-3">https://api.ing.nl/compliance/alert</td>
+                                        <td class="py-3"><span class="text-green-400"><i class="fa-solid fa-check-circle"></i> Active</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 h-fit">
+                        <h3 class="font-bold text-white mb-4">Authenticatie</h3>
+                        <p class="text-xs text-slate-400 mb-4">Gebruik uw bearer token voor API verzoeken. Deel deze sleutel nooit.</p>
+                        <label class="text-xs font-bold text-slate-500 uppercase">Productie API key</label>
+                        <div class="flex mt-1 mb-6">
+                            <input type="password" value="sk_live_1234567890abcdef" class="w-full bg-slate-950 border border-slate-700 rounded-l p-2 text-slate-300 text-sm outline-none" readonly>
+                            <button class="bg-slate-800 border border-l-0 border-slate-700 px-3 rounded-r text-slate-400 hover:text-white"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                        <button class="w-full py-2 border border-slate-700 text-slate-300 rounded hover:bg-slate-800 text-sm font-bold transition">Genereer nieuwe sleutel</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // Settings Slide-over Logic
+        function toggleSettings() {
+            const panel = document.getElementById('settings-panel');
+            const overlay = document.getElementById('settings-overlay');
+            panel.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+
+        // Tab Switching Logic
+        function switchView(viewId) {
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('nav-active'));
+            const targetBtn = document.getElementById(`nav-${viewId}`);
+            if(targetBtn) targetBtn.classList.add('nav-active');
+
+            const views = ['view-auction', 'view-cfo', 'view-api', 'view-portfolio', 'view-strategy', 'view-compliance'];
+            views.forEach(v => {
+                const el = document.getElementById(v);
+                if(el) el.classList.add('hidden');
+            });
+
+            const activeView = document.getElementById(`view-${viewId}`);
+            if(activeView) activeView.classList.remove('hidden');
+
+            if (viewId === 'cfo' && !cfoChartInstance) initCfoChart();
+            if (viewId === 'portfolio' && !chartsRendered) initPortfolioCharts();
+        }
+
+        // --- LIVE AUCTION LOGIC & DATA ---
+        const mockAuctions = [
+            { id: "0x71C7...8976F", city: "Amsterdam, 1017BC", income: "€ 85.000", score: "A+ (Zeker)", ltv: "82%", time: "02:14" },
+            { id: "0x9b2a...f7c2A", city: "Utrecht, 3522BC", income: "€ 62.000", score: "A (Laag)", ltv: "95% (NHG)", time: "04:30" },
+            { id: "0x3a1f...90deB", city: "Rotterdam, 3012AB", income: "€ 110.000", score: "B (Midden)", ltv: "100%", time: "11:45" },
+            { id: "0x8f4d...31baC", city: "Weesp, 1382TB", income: "€ 64.500", score: "A (Laag)", ltv: "88%", time: "18:20" },
+            { id: "0x2c9e...55abD", city: "Haarlem, 3511BB", income: "€ 92.000", score: "A+ (Zeker)", ltv: "75%", time: "22:10" },
+            { id: "0x5e1a...77fcE", city: "Den Haag, 2511CC", income: "€ 45.000", score: "C (Hoog)", ltv: "100%", time: "24:00" },
+            { id: "0x1a8b...99cdF", city: "Eindhoven, 2512DD", income: "€ 130.000", score: "A+ (Zeker)", ltv: "60%", time: "1d 02h" },
+            { id: "0x4d7c...22efA", city: "Groningen, 5611EE", income: "€ 78.000", score: "B (Midden)", ltv: "92%", time: "1d 05h" },
+            { id: "0x6f5e...11abB", city: "Almere, 9711FF", income: "€ 55.000", score: "A (Laag)", ltv: "100% (NHG)", time: "1d 12h" },
+            { id: "0x9a8b...44cdC", city: "Leiden, 2011GG", income: "€ 88.000", score: "A+ (Zeker)", ltv: "80%", time: "1d 18h" }
+        ];
+
+        function renderAuctions(dataList) {
+            const tbody = document.getElementById('auction-table-body');
+            tbody.innerHTML = '';
+            dataList.forEach(item => {
+                let badgeColor = "bg-green-500/10 text-green-400 border-green-500/20";
+                if(item.score.includes("B")) badgeColor = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                if(item.score.includes("C")) badgeColor = "bg-red-500/10 text-red-400 border-red-500/20";
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded bg-slate-800 flex items-center justify-center mr-3 text-teal-500"><i class="fa-solid fa-house"></i></div>
+                            <div>
+                                <p class="font-bold text-white">${item.city}</p>
+                                <p class="text-xs text-slate-500 font-mono">Token: ${item.id}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <p class="font-medium text-white">${item.income} / jr</p>
+                        <p class="text-xs text-green-400"><i class="fa-solid fa-check-circle mr-1"></i>Ockto Verified</p>
+                    </td>
+                    <td class="p-4"><span class="px-2 py-1 ${badgeColor} border rounded text-xs font-bold">${item.score}</span></td>
+                    <td class="p-4 font-mono">${item.ltv}</td>
+                    <td class="p-4 text-amber-400 font-mono"><i class="fa-regular fa-clock mr-1"></i> ${item.time}</td>
+                    <td class="p-4 text-right">
+                        ${item.score.includes("A") 
+                            ? `<span class="text-xs text-teal-500 mr-2">Auto-bod actief</span>`
+                            : `<button class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded border border-slate-600 text-xs">Beoordeel</button>`
+                        }
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        renderAuctions(mockAuctions);
+
+        let simInterval;
+        function startAuctionSim() {
+            const btn = document.getElementById('btn-start-sim');
+            const badge = document.getElementById('auction-badge');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Simulatie draait...';
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            badge.classList.remove('hidden');
+
+            const newDossiers = [
+                { id: "0x11A1...22B3", city: "Arnhem, 1314AB", income: "€ 71.000", score: "A (Laag)", ltv: "85%", time: "00:00" },
+                { id: "0x44D4...55E6", city: "Zwolle, 9712AC", income: "€ 105.000", score: "A+ (Zeker)", ltv: "70%", time: "00:00" }
+            ];
+
+            let count = 0;
+            simInterval = setInterval(() => {
+                if(count >= newDossiers.length) {
+                    clearInterval(simInterval);
+                    btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Simulatie klaar';
+                    setTimeout(() => badge.classList.add('hidden'), 3000);
+                    return;
+                }
+                
+                mockAuctions.unshift(newDossiers[count]);
+                renderAuctions(mockAuctions);
+                
+                const tbody = document.getElementById('auction-table-body');
+                if(tbody && tbody.firstChild) tbody.firstChild.classList.add('flash-row');
+                
+                count++;
+            }, 3000);
+        }
+
+        // --- PORTFOLIO CHARTS ---
+        let chartsRendered = false;
+        function initPortfolioCharts() {
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = 'Inter';
+
+            new Chart(document.getElementById('chartRisk').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['AAA (Zeer zeker)', 'A (Zeker)', 'B (Verhoogd)', 'C (Hoog)'],
+                    datasets: [{ data: [40, 35, 20, 5], backgroundColor: ['#14b8a6', '#3b82f6', '#f59e0b', '#ef4444'], borderWidth: 0, cutout: '70%' }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+            });
+
+            new Chart(document.getElementById('chartAge').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['25-35', '35-45', '45-55', '55+'],
+                    datasets: [{ label: '% van portfolio', data: [30, 45, 15, 10], backgroundColor: '#3b82f6', borderRadius: 4 }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' } }, x: { grid: { display: false } } } }
+            });
+
+            new Chart(document.getElementById('chartEnergy').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['A+++ / A', 'B', 'C', 'D - G'],
+                    datasets: [{ label: '% van portfolio', data: [50, 20, 15, 15], backgroundColor: ['#22c55e', '#84cc16', '#eab308', '#ef4444'], borderRadius: 4 }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#1e293b' } }, x: { grid: { display: false } } } }
+            });
+
+            chartsRendered = true;
+        }
+
+        // --- CFO CALCULATOR LOGIC ---
+        const inpVolume = document.getElementById('inp-volume');
+        const inpCost = document.getElementById('inp-cost');
+        const nexumFee = 500;
+        let cfoChartInstance = null;
+
+        function updateCalculator() {
+            const volume = parseInt(inpVolume.value);
+            const cost = parseInt(inpCost.value);
+            const currentTotal = volume * cost;
+            const nexumTotal = volume * nexumFee;
+            const savings = currentTotal - nexumTotal;
+
+            document.getElementById('val-volume').innerText = volume.toLocaleString('nl-NL');
+            document.getElementById('val-cost').innerText = `€ ${cost.toLocaleString('nl-NL')}`;
+            document.getElementById('out-current').innerText = `€ ${(currentTotal / 1000000).toFixed(1)}M`;
+            document.getElementById('out-nexum').innerText = `€ ${(nexumTotal / 1000000).toFixed(1)}M`;
+            document.getElementById('out-savings').innerText = `€ ${(savings / 1000000).toFixed(1)}M`;
+
+            if (cfoChartInstance) {
+                cfoChartInstance.data.datasets[0].data = [currentTotal, nexumTotal];
+                cfoChartInstance.update();
+            }
+        }
+
+        function initCfoChart() {
+            const ctx = document.getElementById('cfoChart').getContext('2d');
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = 'Inter';
+            
+            cfoChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Huidige situatie', 'Uitbesteed (Nexum)'],
+                    datasets: [{ label: 'Totale kosten', data: [0, 0], backgroundColor: ['#475569', '#14b8a6'], borderRadius: 6, borderWidth: 0 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { color: '#1e293b' }, ticks: { callback: function(value) { return '€ ' + (value / 1000000) + 'M'; } } }, x: { grid: { display: false } } }
+                }
+            });
+            updateCalculator();
+        }
+
+        inpVolume.addEventListener('input', updateCalculator);
+        inpCost.addEventListener('input', updateCalculator);
+
+    </script>
+</body>
+</html>

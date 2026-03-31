@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexum notary portal | Partner backend</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        .nav-item { transition: all 0.2s; border-left: 3px solid transparent; }
+        .nav-item:hover { background-color: #1e293b; border-left-color: #6366f1; }
+        .nav-active { background-color: #1e293b; border-left-color: #6366f1; color: #6366f1; }
+        
+        .kanban-col { background: #1e293b; border: 1px solid #334155; border-radius: 12px; display: flex; flex-direction: column; height: calc(100vh - 180px); }
+        .kanban-header { padding: 15px; font-weight: 600; border-bottom: 1px solid #334155; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        .kanban-body { padding: 15px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 15px; }
+        
+        .task-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 15px; cursor: pointer; transition: all 0.2s; }
+        .task-card:hover { border-color: #6366f1; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+
+        /* Slide-over settings panel */
+        #settings-panel { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
+        #settings-panel.open { transform: translateX(0); }
+        #settings-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; }
+        #settings-overlay.open { opacity: 1; pointer-events: auto; }
+        
+        /* Toggle Switch Styling */
+        .toggle-checkbox:checked { right: 0; border-color: #6366f1; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #6366f1; }
+        .toggle-checkbox { right: 0; z-index: 1; border-color: #e2e8f0; transition: all 0.3s; }
+        .toggle-label { width: 2.5rem; height: 1.25rem; background-color: #334155; border-radius: 9999px; transition: all 0.3s; cursor: pointer; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Settings Overlay & Panel -->
+    <div id="settings-overlay" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-[90]" onclick="toggleSettings()"></div>
+    <div id="settings-panel" class="fixed top-0 right-0 h-full w-full sm:w-96 bg-slate-900 border-l border-slate-800 z-[100] flex flex-col shadow-2xl">
+        <div class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900">
+            <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-sliders text-indigo-500 mr-2"></i> Kantoor instellingen</h2>
+            <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-8">
+            <!-- Sectie 1 -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Workflow & automatisering</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">Auto-concept generatie</p>
+                            <p class="text-xs text-slate-500">Zet direct een concept klaar bij gunning</p>
+                        </div>
+                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                            <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">Notificatie nieuw dossier</p>
+                            <p class="text-xs text-slate-500">Stuur email naar klerk bij nieuwe instroom</p>
+                        </div>
+                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                            <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Sectie 2 -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Koppelingen</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">KNB netwerk API</p>
+                            <p class="text-xs text-green-400">Verbonden (laatste sync: 2m geleden)</p>
+                        </div>
+                        <button class="text-indigo-400 text-xs hover:underline">Vernieuw</button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">Kadaster ketenintegratie</p>
+                            <p class="text-xs text-green-400">Verbonden (via Nexum node)</p>
+                        </div>
+                        <button class="text-indigo-400 text-xs hover:underline">Beheer</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Sectie 3 -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Beveiliging (Wwft)</h3>
+                <div class="p-4 bg-slate-800 rounded-lg border border-slate-700 text-sm">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-slate-300">Digitale volmachten (iDIN)</span>
+                        <span class="text-green-400 font-bold text-xs"><i class="fa-solid fa-check mr-1"></i>Actief</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2">Klanten mogen koopovereenkomsten digitaal tekenen zonder fysieke aanwezigheid.</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 border-t border-slate-800 bg-slate-900">
+            <button onclick="toggleSettings()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-bold border border-slate-700 transition">Opslaan & sluiten</button>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex z-20">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-slate-800">
+                <span class="text-2xl font-bold tracking-tight text-white">Nexum<span class="text-indigo-500">.</span></span>
+                <span class="ml-2 px-2 py-0.5 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase">Notary</span>
+            </div>
+            
+            <nav class="mt-6 flex flex-col">
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Workflow</p>
+                <button onclick="switchView('dossiers')" id="nav-dossiers" class="nav-item nav-active flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-layer-group w-6"></i> Dossier pipeline
+                </button>
+                <button onclick="switchView('templates')" id="nav-templates" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-file-code w-6"></i> Smart templates
+                </button>
+                
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mt-8 mb-2">Management</p>
+                <button onclick="switchView('performance')" id="nav-performance" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-chart-line w-6"></i> Kantoor prestaties
+                </button>
+                <button onclick="switchView('billing')" id="nav-billing" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-file-invoice-dollar w-6"></i> Facturatie
+                </button>
+
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mt-8 mb-2">Blockchain</p>
+                <button onclick="switchView('sync')" id="nav-sync" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-cube w-6"></i> Kadaster sync
+                </button>
+            </nav>
+        </div>
+        
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded bg-slate-700 flex items-center justify-center font-bold text-white text-sm"><i class="fa-solid fa-scale-balanced"></i></div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-white">Van Doorne N.V.</p>
+                    <p class="text-xs text-indigo-400">Notariaat vastgoed</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-950">
+        <header class="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 lg:px-10 z-10">
+            <div class="flex items-center text-sm text-slate-400">
+                <i class="fa-solid fa-shield-halved text-indigo-500 mr-2"></i> KNB netwerk: <span class="text-white ml-1">Actief & beveiligd</span>
+            </div>
+            <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-gear text-lg"></i></button>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-6 lg:p-10" id="main-content">
+            
+            <!-- VIEW 1: DOSSIERS (Kanban) -->
+            <div id="view-dossiers" class="block animate-[fadeIn_0.3s_ease-out]">
+                <div class="mb-8">
+                    <h1 class="text-2xl font-bold text-white mb-1">Dossier pipeline</h1>
+                    <p class="text-sm text-slate-400">Automatische instroom van akten vanuit de Nexum exchange en finance flow.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Column 1 -->
+                    <div class="kanban-col">
+                        <div class="kanban-header text-blue-400 border-b-blue-500/30 flex justify-between">
+                            <span>1. Data incompleet</span>
+                            <span class="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-[10px]">0</span>
+                        </div>
+                        <div class="kanban-body justify-center">
+                            <!-- Empty state info -->
+                            <div class="text-center p-6 border border-dashed border-slate-600 rounded-lg text-slate-500">
+                                <i class="fa-solid fa-check-double text-2xl mb-2 text-slate-600"></i>
+                                <p class="text-xs">Geen wachtende dossiers.<br>Nexum KYC zorgt voor 100% complete instroom.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2 -->
+                    <div class="kanban-col">
+                        <div class="kanban-header text-amber-400 border-b-amber-500/30 flex justify-between">
+                            <span>2. Concept (Controle)</span>
+                            <span class="bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded text-[10px]">4</span>
+                        </div>
+                        <div class="kanban-body">
+                            <div class="task-card">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-xs font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">Koopakte</span>
+                                    <span class="text-[10px] text-slate-500">#NEX-882</span>
+                                </div>
+                                <p class="font-bold text-white text-sm">Prinsengracht 12-H</p>
+                                <p class="text-xs text-slate-400 mt-1 mb-3">Template: Standaard Amsterdam</p>
+                                <div class="flex items-center text-xs text-slate-500">
+                                    <i class="fa-solid fa-robot text-indigo-500 mr-2"></i> 100% Pre-filled door AI
+                                </div>
+                            </div>
+                            
+                            <div class="task-card">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-xs font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">Koopakte</span>
+                                    <span class="text-[10px] text-slate-500">#NEX-885</span>
+                                </div>
+                                <p class="font-bold text-white text-sm">Talmastraat 26, Weesp</p>
+                                <p class="text-xs text-slate-400 mt-1 mb-3">Template: NVM standaard model</p>
+                                <div class="flex items-center text-xs text-slate-500">
+                                    <i class="fa-solid fa-robot text-indigo-500 mr-2"></i> 100% Pre-filled door AI
+                                </div>
+                            </div>
+
+                            <div class="task-card border-slate-600">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-xs font-bold bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">Hypotheekakte</span>
+                                    <span class="text-[10px] text-slate-500">#NEX-879</span>
+                                </div>
+                                <p class="font-bold text-white text-sm">Javastraat 102</p>
+                                <p class="text-xs text-slate-400 mt-1 mb-3">Bank: ABN AMRO</p>
+                                <div class="flex items-center text-xs text-amber-500">
+                                    <i class="fa-solid fa-circle-exclamation mr-2"></i> Wacht op goedkeuring klerk
+                                </div>
+                            </div>
+
+                            <div class="task-card">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-xs font-bold bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded">Koopakte</span>
+                                    <span class="text-[10px] text-slate-500">#NEX-890</span>
+                                </div>
+                                <p class="font-bold text-white text-sm">Zuidas 4</p>
+                                <p class="text-xs text-slate-400 mt-1 mb-3">Template: Nieuwbouw model</p>
+                                <div class="flex items-center text-xs text-slate-500">
+                                    <i class="fa-solid fa-robot text-indigo-500 mr-2"></i> 100% Pre-filled door AI
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 3 -->
+                    <div class="kanban-col">
+                        <div class="kanban-header text-green-400 border-b-green-500/30 flex justify-between">
+                            <span>3. Passeer-klaar (iDIN sign)</span>
+                            <span class="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-[10px]">3</span>
+                        </div>
+                        <div class="kanban-body">
+                            <div class="task-card border-green-500/30 bg-green-500/5">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-xs font-bold bg-green-500/20 text-green-400 px-2 py-0.5 rounded">Levering + Hypotheek</span>
+                                    <span class="text-[10px] text-slate-500">#NEX-710</span>
+                                </div>
+                                <p class="font-bold text-white text-sm">Vondelstraat 44</p>
+                                <p class="text-xs text-slate-400 mt-1 mb-3">Bank: ING | Koper: S. de Vries</p>
+                                <button onclick="alert('Blockchain transactie (Transfer Ownership) en iDIN ondertekenverzoek verzonden.')" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2 rounded transition">
+                                    Start passeer-flow
+                                </button>
+                            </div>
+
+                            <div class="task-card border-green-500/30 bg-green-500/5">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-xs font-bold bg-green-500/20 text-green-400 px-2 py-0.5 rounded">Koopakte (Getekend)</span>
+                                    <span class="text-[10px] text-slate-500">#NEX-699</span>
+                                </div>
+                                <p class="font-bold text-white text-sm">Keizersgracht 210</p>
+                                <p class="text-xs text-slate-400 mt-1 mb-3">Wacht op finale betaling escrow</p>
+                                <div class="text-xs text-slate-500 flex items-center"><i class="fa-solid fa-check text-green-500 mr-2"></i> iDIN handtekeningen binnen</div>
+                            </div>
+                            
+                            <div class="task-card border-green-500/30 bg-green-500/5">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-xs font-bold bg-green-500/20 text-green-400 px-2 py-0.5 rounded">Levering + Hypotheek</span>
+                                    <span class="text-[10px] text-slate-500">#NEX-705</span>
+                                </div>
+                                <p class="font-bold text-white text-sm">Oudegracht 12</p>
+                                <p class="text-xs text-slate-400 mt-1 mb-3">Bank: Rabobank</p>
+                                <button class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-2 rounded transition">
+                                    Start passeer-flow
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: SMART TEMPLATES -->
+            <div id="view-templates" class="hidden animate-[fadeIn_0.3s_ease-out]">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white mb-1">Smart templates beheer</h1>
+                        <p class="text-sm text-slate-400">Upload Word-documenten en koppel variabelen aan de Nexum brondata.</p>
+                    </div>
+                    <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm font-bold shadow-lg shadow-indigo-500/20 transition flex items-center">
+                        <i class="fa-solid fa-plus mr-2"></i> Nieuw template uploaden
+                    </button>
+                </div>
+                
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-8 shadow-lg text-center">
+                    <i class="fa-solid fa-file-word text-4xl text-slate-600 mb-4"></i>
+                    <h3 class="text-lg font-bold text-white mb-2">Uw actieve templates</h3>
+                    <p class="text-sm text-slate-400 max-w-md mx-auto mb-6">U heeft momenteel 3 actieve templates gekoppeld aan de Nexum API. Gegevens van de koper, verkoper en het object worden automatisch ingevuld.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                        <div class="p-4 border border-slate-700 rounded-lg bg-slate-800/50">
+                            <h4 class="font-bold text-indigo-400 text-sm mb-1">Standaard koopakte A'dam</h4>
+                            <p class="text-xs text-slate-500">Laatst gewijzigd: 12 Feb 2026</p>
+                        </div>
+                        <div class="p-4 border border-slate-700 rounded-lg bg-slate-800/50">
+                            <h4 class="font-bold text-indigo-400 text-sm mb-1">Hypotheekakte standaard</h4>
+                            <p class="text-xs text-slate-500">Laatst gewijzigd: 05 Jan 2026</p>
+                        </div>
+                        <div class="p-4 border border-slate-700 rounded-lg bg-slate-800/50">
+                            <h4 class="font-bold text-indigo-400 text-sm mb-1">Leveringsakte model 1</h4>
+                            <p class="text-xs text-slate-500">Laatst gewijzigd: 22 Nov 2025</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: PERFORMANCE / PRESTATIES -->
+            <div id="view-performance" class="hidden animate-[fadeIn_0.3s_ease-out]">
+                <div class="mb-8">
+                    <h1 class="text-2xl font-bold text-white mb-1">Kantoor prestaties & data</h1>
+                    <p class="text-sm text-slate-400">Inzicht in efficiëntie en FTE-besparing door de Nexum integratie.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Gepasseerde akten (YTD)</p>
+                        <p class="text-3xl font-bold text-white">842</p>
+                        <p class="text-xs text-green-400 mt-2"><i class="fa-solid fa-arrow-trend-up mr-1"></i> +24% via Nexum rail</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Auto-fill ratio</p>
+                        <p class="text-3xl font-bold text-indigo-400">94.2%</p>
+                        <p class="text-xs text-slate-500 mt-2">Van alle data wordt automatisch ingevuld</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg border-b-4 border-b-teal-500">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Gem. besparing per akte</p>
+                        <p class="text-3xl font-bold text-teal-400">4.2 uur</p>
+                        <p class="text-xs text-slate-500 mt-2">Aan data-invoer en controles</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg">
+                    <h3 class="text-sm font-bold text-white mb-6">Tijdsbesteding: Traditioneel vs Nexum</h3>
+                    <div class="relative h-64 w-full">
+                        <canvas id="notaryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 4: BILLING / FACTURATIE -->
+            <div id="view-billing" class="hidden animate-[fadeIn_0.3s_ease-out]">
+                <div class="mb-8 flex justify-between items-end">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white mb-1">Facturatie & afdrachten</h1>
+                        <p class="text-sm text-slate-400">Overzicht van uw kantooromzet en de Nexum service fee afdrachten.</p>
+                    </div>
+                    <button class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded text-sm font-bold border border-slate-700 transition flex items-center">
+                        <i class="fa-solid fa-download mr-2"></i> Exporteer maandoverzicht
+                    </button>
+                </div>
+
+                <!-- KPI Kaarten -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Bruto omzet (YTD)</p>
+                        <p class="text-3xl font-bold text-white">€ 842.000</p>
+                        <p class="text-xs text-slate-500 mt-2">Gepasseerde akten via Nexum platform</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Nexum platform fee</p>
+                        <p class="text-3xl font-bold text-indigo-400">€ 42.100</p>
+                        <p class="text-xs text-slate-500 mt-2">Vast tarief van €50,- per dossier</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg border-l-4 border-l-amber-500">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Openstaande afdrachten</p>
+                        <p class="text-3xl font-bold text-amber-500">€ 2.450</p>
+                        <p class="text-xs text-slate-500 mt-2">Wordt verrekend aan einde van de maand</p>
+                    </div>
+                </div>
+
+                <!-- Transactie Tabel -->
+                <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden shadow-xl">
+                    <div class="p-6 border-b border-slate-800">
+                        <h3 class="text-lg font-bold text-white">Recente transacties</h3>
+                    </div>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-800/50 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-800">
+                                <th class="p-4 font-semibold">Datum</th>
+                                <th class="p-4 font-semibold">Dossier</th>
+                                <th class="p-4 font-semibold">Omschrijving</th>
+                                <th class="p-4 font-semibold">Bruto bedrag</th>
+                                <th class="p-4 font-semibold">Nexum fee</th>
+                                <th class="p-4 font-semibold text-right">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm text-slate-300">
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                                <td class="p-4 text-slate-400">10 Mrt 2026</td>
+                                <td class="p-4 font-mono text-xs">#NEX-872</td>
+                                <td class="p-4">Levering + hypotheekakte (Prinsengracht)</td>
+                                <td class="p-4 font-medium text-white">€ 1.150,00</td>
+                                <td class="p-4 text-indigo-400">- € 50,00</td>
+                                <td class="p-4 text-right"><span class="px-2 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded text-xs font-bold">Voldaan</span></td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                                <td class="p-4 text-slate-400">09 Mrt 2026</td>
+                                <td class="p-4 font-mono text-xs">#NEX-870</td>
+                                <td class="p-4">Levering (Vondelstraat 44)</td>
+                                <td class="p-4 font-medium text-white">€ 750,00</td>
+                                <td class="p-4 text-indigo-400">- € 50,00</td>
+                                <td class="p-4 text-right"><span class="px-2 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded text-xs font-bold">Voldaan</span></td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                                <td class="p-4 text-slate-400">08 Mrt 2026</td>
+                                <td class="p-4 font-mono text-xs">#NEX-865</td>
+                                <td class="p-4">Hypotheekakte oversluiting</td>
+                                <td class="p-4 font-medium text-white">€ 650,00</td>
+                                <td class="p-4 text-indigo-400">- € 50,00</td>
+                                <td class="p-4 text-right"><span class="px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-xs font-bold">Verwerking</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30 transition-colors">
+                                <td class="p-4 text-slate-400">08 Mrt 2026</td>
+                                <td class="p-4 font-mono text-xs">#NEX-864</td>
+                                <td class="p-4">Levering + hypotheekakte (Zuidas 4)</td>
+                                <td class="p-4 font-medium text-white">€ 1.250,00</td>
+                                <td class="p-4 text-indigo-400">- € 50,00</td>
+                                <td class="p-4 text-right"><span class="px-2 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded text-xs font-bold">Voldaan</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- VIEW 5: KADASTER SYNC -->
+            <div id="view-sync" class="hidden animate-[fadeIn_0.3s_ease-out]">
+                <div class="mb-8 flex justify-between items-end">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white mb-1">Blockchain oracle & kadaster sync</h1>
+                        <p class="text-sm text-slate-400">Monitor de status van gepasseerde akten en hun verankering op de Ethereum ledger.</p>
+                    </div>
+                    <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded text-sm font-bold shadow-lg shadow-indigo-500/20 transition flex items-center">
+                        <i class="fa-solid fa-rotate mr-2"></i> Forceer sync
+                    </button>
+                </div>
+
+                <!-- Status panelen -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Nexum node status</p>
+                            <p class="font-bold text-white">Actief (L2 Rollup)</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-teal-500/10 flex items-center justify-center border border-teal-500/30">
+                            <div class="w-3 h-3 bg-teal-400 rounded-full animate-pulse"></div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Kadaster API</p>
+                            <p class="font-bold text-white">Verbonden</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/30">
+                            <i class="fa-solid fa-check text-green-400"></i>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Pending blocks</p>
+                            <p class="font-bold text-white">0 mutaties</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                            <i class="fa-solid fa-cubes text-slate-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sync logs tabel -->
+                <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden shadow-xl">
+                    <div class="p-6 border-b border-slate-800">
+                        <h3 class="text-lg font-bold text-white">Recente mutaties (Smart contracts)</h3>
+                    </div>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-800/50 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-800">
+                                <th class="p-4 font-semibold">Tijdstip</th>
+                                <th class="p-4 font-semibold">Actie</th>
+                                <th class="p-4 font-semibold">Kadaster referentie</th>
+                                <th class="p-4 font-semibold">Token ID (TxHash)</th>
+                                <th class="p-4 font-semibold text-right">Netwerk status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm text-slate-300">
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                                <td class="p-4 text-slate-400">Vandaag, 14:32</td>
+                                <td class="p-4"><span class="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs font-bold border border-blue-500/20">Transfer ownership</span></td>
+                                <td class="p-4">ASD00 C 1234</td>
+                                <td class="p-4 font-mono text-xs text-teal-400 hover:underline cursor-pointer">0x71c7a8...9b2f</td>
+                                <td class="p-4 text-right"><span class="text-green-400"><i class="fa-solid fa-check-double mr-1"></i> Verankerd</span></td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                                <td class="p-4 text-slate-400">Vandaag, 11:15</td>
+                                <td class="p-4"><span class="bg-purple-500/10 text-purple-400 px-2 py-1 rounded text-xs font-bold border border-purple-500/20">Add mortgage right</span></td>
+                                <td class="p-4">UTR00 A 9876</td>
+                                <td class="p-4 font-mono text-xs text-teal-400 hover:underline cursor-pointer">0x3a1f90...d4e1</td>
+                                <td class="p-4 text-right"><span class="text-green-400"><i class="fa-solid fa-check-double mr-1"></i> Verankerd</span></td>
+                            </tr>
+                            <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                                <td class="p-4 text-slate-400">Gisteren, 16:40</td>
+                                <td class="p-4"><span class="bg-indigo-500/10 text-indigo-400 px-2 py-1 rounded text-xs font-bold border border-indigo-500/20">Update valuation</span></td>
+                                <td class="p-4">WSP00 B 5543</td>
+                                <td class="p-4 font-mono text-xs text-teal-400 hover:underline cursor-pointer">0x9b2af7...c2a8</td>
+                                <td class="p-4 text-right"><span class="text-green-400"><i class="fa-solid fa-check-double mr-1"></i> Verankerd</span></td>
+                            </tr>
+                            <tr class="hover:bg-slate-800/30 transition-colors">
+                                <td class="p-4 text-slate-400">Gisteren, 09:20</td>
+                                <td class="p-4"><span class="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs font-bold border border-blue-500/20">Transfer ownership</span></td>
+                                <td class="p-4">HRL00 D 2211</td>
+                                <td class="p-4 font-mono text-xs text-teal-400 hover:underline cursor-pointer">0x2c9e55...b1d7</td>
+                                <td class="p-4 text-right"><span class="text-green-400"><i class="fa-solid fa-check-double mr-1"></i> Verankerd</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // Settings Slide-over Logic
+        function toggleSettings() {
+            const panel = document.getElementById('settings-panel');
+            const overlay = document.getElementById('settings-overlay');
+            panel.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+
+        // View Switching
+        let chartInitialized = false;
+
+        function switchView(viewId) {
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('nav-active'));
+            document.getElementById(`nav-${viewId}`).classList.add('nav-active');
+            
+            const views = ['view-dossiers', 'view-templates', 'view-performance', 'view-billing', 'view-sync'];
+            views.forEach(v => {
+                const el = document.getElementById(v);
+                if(el) el.classList.add('hidden');
+            });
+
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+
+            if (viewId === 'performance' && !chartInitialized) {
+                initChart();
+                chartInitialized = true;
+            }
+        }
+
+        // Performance Chart
+        function initChart() {
+            const ctx = document.getElementById('notaryChart').getContext('2d');
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = 'Inter';
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Data overtypen & KYC', 'Akte opmaak', 'Controle & passeer'],
+                    datasets: [
+                        {
+                            label: 'Traditionele uren (FTE)',
+                            data: [2.5, 1.5, 1.0],
+                            backgroundColor: '#475569',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Via Nexum (Geautomatiseerd)',
+                            data: [0.1, 0.2, 0.5],
+                            backgroundColor: '#6366f1',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { color: '#e2e8f0' } }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#1e293b' },
+                            title: { display: true, text: 'Uren per dossier', color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

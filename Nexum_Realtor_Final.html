@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexum agent portal | Partner backend</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; overflow-x: hidden; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        
+        /* Navigatie en Kaarten */
+        .nav-item { transition: all 0.2s; border-left: 3px solid transparent; }
+        .nav-item:hover { background-color: #1e293b; border-left-color: #3b82f6; }
+        .nav-active { background-color: #1e293b; border-left-color: #3b82f6; color: #3b82f6; }
+        .stat-card { background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border: 1px solid #334155; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); border-color: #3b82f6; }
+        
+        /* Slide-over settings panel */
+        #settings-panel { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
+        #settings-panel.open { transform: translateX(0); }
+        #settings-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; }
+        #settings-overlay.open { opacity: 1; pointer-events: auto; }
+        
+        /* Toggle Switch Styling */
+        .toggle-checkbox:checked { right: 0; border-color: #3b82f6; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #3b82f6; }
+        .toggle-checkbox { right: 0; z-index: 1; border-color: #e2e8f0; transition: all 0.3s; }
+        .toggle-label { width: 2.5rem; height: 1.25rem; background-color: #334155; border-radius: 9999px; transition: all 0.3s; cursor: pointer; }
+
+        /* Animaties */
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+        
+        .flash-row { animation: flashRow 1.5s ease-out forwards; }
+        @keyframes flashRow { 0% { background-color: rgba(59, 130, 246, 0.3); } 100% { background-color: transparent; } }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Settings Overlay & Panel -->
+    <div id="settings-overlay" class="fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-[90]" onclick="toggleSettings()"></div>
+    <div id="settings-panel" class="fixed top-0 right-0 h-full w-full sm:w-96 bg-slate-900 border-l border-slate-800 z-[100] flex flex-col shadow-2xl">
+        <div class="h-16 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900">
+            <h2 class="text-lg font-bold text-white"><i class="fa-solid fa-sliders text-blue-500 mr-2"></i> Kantoor instellingen</h2>
+            <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-8">
+            <!-- Sectie 1 -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Systeem & integraties</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">Realworks CRM sync</p>
+                            <p class="text-xs text-green-400">Verbonden (live status)</p>
+                        </div>
+                        <button class="text-blue-400 text-xs hover:underline">Vernieuw</button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">Auto-export biedlogboek</p>
+                            <p class="text-xs text-slate-500">Stuur PDF direct naar Realworks na gunning</p>
+                        </div>
+                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                            <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Sectie 2 -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Lead generatie</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">Ontvang verkoop-leads</p>
+                            <p class="text-xs text-slate-500">Kopers in uw regio die nog moeten verkopen</p>
+                        </div>
+                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                            <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">Gewenste werkgebied (postcodes)</label>
+                        <input type="text" value="1011 - 1099, 1100 - 1119" class="w-full bg-slate-950 border border-slate-700 rounded p-2 text-slate-300 text-sm outline-none">
+                    </div>
+                </div>
+            </div>
+            <!-- Sectie 3 -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4">Notificaties</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">Nieuw bod ontvangen</p>
+                        </div>
+                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                            <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-200">Reserve price behaald</p>
+                        </div>
+                        <div class="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" checked/>
+                            <label class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 border-t border-slate-800 bg-slate-900">
+            <button onclick="toggleSettings()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-bold border border-slate-700 transition">Opslaan & sluiten</button>
+        </div>
+    </div>
+
+    <!-- Sidebar / Navigatie -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between hidden md:flex z-20">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-slate-800">
+                <span class="text-2xl font-bold tracking-tight text-white">Nexum<span class="text-blue-500">.</span></span>
+                <span class="ml-2 px-2 py-0.5 bg-slate-800 text-slate-400 text-[10px] font-bold rounded uppercase">Agent portal</span>
+            </div>
+            
+            <nav class="mt-6 flex flex-col">
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Activity</p>
+                <button onclick="switchView('tasks')" id="nav-tasks" class="nav-item nav-active flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-list-check w-6"></i> Tasks
+                </button>
+                <button onclick="switchView('aankoop')" id="nav-aankoop" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-house-user w-6"></i> Aankoopdossiers
+                </button>
+                <button onclick="switchView('verkoop')" id="nav-verkoop" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-sign w-6"></i> Verkoopdossiers
+                </button>
+                
+                <p class="px-6 text-xs font-bold text-slate-500 uppercase tracking-wider mt-8 mb-2">Kantoor</p>
+                <button onclick="switchView('performance')" id="nav-performance" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-ranking-star w-6"></i> Performance
+                </button>
+                <button onclick="switchView('finance')" id="nav-finance" class="nav-item flex items-center px-6 py-3 text-sm font-medium text-slate-300 w-full text-left">
+                    <i class="fa-solid fa-file-invoice-dollar w-6"></i> Finance & facturatie
+                </button>
+            </nav>
+        </div>
+        
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center">
+                <div class="w-8 h-8 rounded bg-slate-700 flex items-center justify-center font-bold text-white text-sm"><i class="fa-solid fa-user-tie"></i></div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-white">Janssen makelaardij</p>
+                    <p class="text-xs text-blue-400 font-bold"><i class="fa-solid fa-medal mr-1"></i>Gold partner</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-950">
+        <header class="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 lg:px-10 z-10">
+            <div class="flex items-center text-sm text-slate-400">
+                <i class="fa-solid fa-link text-blue-500 mr-2"></i> CRM sync: <span class="text-white ml-1">Realworks (actief)</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleSettings()" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-gear text-lg"></i></button>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-6 lg:p-10 relative" id="main-content">
+            
+            <!-- VIEW 1: TASKS (Dashboard & Werkvoorraad) -->
+            <div id="view-tasks" class="block fade-in">
+                <div class="mb-8 flex justify-between items-end">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white mb-1">Tasks</h1>
+                        <p class="text-sm text-slate-400">Uw actieve dossiers gesorteerd op urgentie en actievereiste.</p>
+                    </div>
+                    <button onclick="switchView('verkoop'); setTimeout(openNewDossier, 300);" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg transition"><i class="fa-solid fa-plus mr-2"></i>Nieuw dossier</button>
+                </div>
+
+                <div class="bg-slate-900 rounded-xl border border-slate-800 shadow-lg overflow-hidden">
+                    <div class="p-4 border-b border-slate-800 bg-slate-800/30 flex gap-4">
+                        <button id="filter-btn-all" onclick="filterTasks('all')" class="task-filter-btn px-4 py-1.5 bg-slate-700 text-white rounded text-sm font-medium transition">Alle taken (10)</button>
+                        <button id="filter-btn-aankoop" onclick="filterTasks('aankoop')" class="task-filter-btn px-4 py-1.5 text-slate-400 hover:text-white rounded text-sm font-medium transition">Aankoop (4)</button>
+                        <button id="filter-btn-verkoop" onclick="filterTasks('verkoop')" class="task-filter-btn px-4 py-1.5 text-slate-400 hover:text-white rounded text-sm font-medium transition">Verkoop (6)</button>
+                    </div>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-xs uppercase tracking-wider text-slate-500 border-b border-slate-800">
+                                <th class="p-4 font-semibold w-24">Type</th>
+                                <th class="p-4 font-semibold">Object / cliënt</th>
+                                <th class="p-4 font-semibold">Huidige status</th>
+                                <th class="p-4 font-semibold text-right">Actie vereist</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm text-slate-300">
+                            <tr class="task-row border-b border-slate-800/50 hover:bg-slate-800/50 transition" data-type="verkoop">
+                                <td class="p-4"><span class="bg-purple-500/20 text-purple-400 px-2 py-1 rounded text-xs font-bold">Verkoop</span></td>
+                                <td class="p-4">
+                                    <p class="font-bold text-white">Prinsengracht 12-H</p>
+                                    <p class="text-xs text-slate-500">A. de Boer</p>
+                                </td>
+                                <td class="p-4"><span class="text-amber-400 font-bold text-xs"><i class="fa-solid fa-clock mr-1"></i>Bieding sluit in 2 uur</span></td>
+                                <td class="p-4 text-right"><button onclick="switchView('bidding-sim')" class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-500">Monitor logboek</button></td>
+                            </tr>
+                            <tr class="task-row border-b border-slate-800/50 hover:bg-slate-800/50 transition" data-type="aankoop">
+                                <td class="p-4"><span class="bg-teal-500/20 text-teal-400 px-2 py-1 rounded text-xs font-bold">Aankoop</span></td>
+                                <td class="p-4">
+                                    <p class="font-bold text-white">Vondelstraat 44</p>
+                                    <p class="text-xs text-slate-500">S. de Vries</p>
+                                </td>
+                                <td class="p-4"><span class="text-slate-300 text-xs"><i class="fa-solid fa-pen-to-square mr-1"></i>Bod voorbereiden</span></td>
+                                <td class="p-4 text-right"><button onclick="switchView('aankoop')" class="bg-slate-700 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-600 border border-slate-600">Ga naar dossier</button></td>
+                            </tr>
+                            <tr class="task-row border-b border-slate-800/50 hover:bg-slate-800/50 transition" data-type="verkoop">
+                                <td class="p-4"><span class="bg-purple-500/20 text-purple-400 px-2 py-1 rounded text-xs font-bold">Verkoop</span></td>
+                                <td class="p-4">
+                                    <p class="font-bold text-white">Talmastraat 26, Weesp</p>
+                                    <p class="text-xs text-slate-500">Fam. Pieters</p>
+                                </td>
+                                <td class="p-4"><span class="text-blue-400 text-xs"><i class="fa-solid fa-cube mr-1"></i>Token gereed</span></td>
+                                <td class="p-4 text-right"><button onclick="switchView('verkoop')" class="bg-slate-700 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-600 border border-slate-600">Publiceer (pre-market)</button></td>
+                            </tr>
+                            <tr class="task-row border-b border-slate-800/50 hover:bg-slate-800/50 transition" data-type="verkoop">
+                                <td class="p-4"><span class="bg-purple-500/20 text-purple-400 px-2 py-1 rounded text-xs font-bold">Verkoop</span></td>
+                                <td class="p-4">
+                                    <p class="font-bold text-white">Zuidas 4</p>
+                                    <p class="text-xs text-slate-500">M. Hendriks</p>
+                                </td>
+                                <td class="p-4"><span class="text-slate-300 text-xs"><i class="fa-solid fa-calendar-days mr-1"></i>3 bezichtigingsaanvragen</span></td>
+                                <td class="p-4 text-right"><button class="bg-slate-700 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-600 border border-slate-600">Plan agenda</button></td>
+                            </tr>
+                            <tr class="task-row border-b border-slate-800/50 hover:bg-slate-800/50 transition" data-type="aankoop">
+                                <td class="p-4"><span class="bg-teal-500/20 text-teal-400 px-2 py-1 rounded text-xs font-bold">Aankoop</span></td>
+                                <td class="p-4">
+                                    <p class="font-bold text-white">Keizersgracht 112</p>
+                                    <p class="text-xs text-slate-500">K. de Jong</p>
+                                </td>
+                                <td class="p-4"><span class="text-green-400 font-bold text-xs"><i class="fa-solid fa-check-circle mr-1"></i>Financiering akkoord</span></td>
+                                <td class="p-4 text-right"><button class="bg-slate-800 text-slate-400 px-3 py-1.5 rounded text-xs font-bold border border-slate-700 cursor-not-allowed">Wacht op notaris</button></td>
+                            </tr>
+                            <tr class="task-row border-b border-slate-800/50 hover:bg-slate-800/50 transition" data-type="verkoop">
+                                <td class="p-4"><span class="bg-purple-500/20 text-purple-400 px-2 py-1 rounded text-xs font-bold">Verkoop</span></td>
+                                <td class="p-4">
+                                    <p class="font-bold text-white">Herengracht 88</p>
+                                    <p class="text-xs text-slate-500">L. Visser</p>
+                                </td>
+                                <td class="p-4"><span class="text-slate-300 text-xs"><i class="fa-solid fa-file-signature mr-1"></i>Conceptakte controleren</span></td>
+                                <td class="p-4 text-right"><button class="bg-slate-700 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-600 border border-slate-600">Open dossier</button></td>
+                            </tr>
+                            <tr class="task-row border-b border-slate-800/50 hover:bg-slate-800/50 transition" data-type="aankoop">
+                                <td class="p-4"><span class="bg-teal-500/20 text-teal-400 px-2 py-1 rounded text-xs font-bold">Aankoop</span></td>
+                                <td class="p-4">
+                                    <p class="font-bold text-white">Amstel 10</p>
+                                    <p class="text-xs text-slate-500">Fam. Bakker</p>
+                                </td>
+                                <td class="p-4"><span class="text-amber-400 text-xs"><i class="fa-solid fa-camera mr-1"></i>Wacht op taxatierapport</span></td>
+                                <td class="p-4 text-right"><button class="bg-slate-700 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-600 border border-slate-600">Contacteer taxateur</button></td>
+                            </tr>
+                            <tr class="task-row border-b border-slate-800/50 hover:bg-slate-800/50 transition" data-type="verkoop">
+                                <td class="p-4"><span class="bg-purple-500/20 text-purple-400 px-2 py-1 rounded text-xs font-bold">Verkoop</span></td>
+                                <td class="p-4">
+                                    <p class="font-bold text-white">Javastraat 5</p>
+                                    <p class="text-xs text-slate-500">R. Smit</p>
+                                </td>
+                                <td class="p-4"><span class="text-green-400 text-xs"><i class="fa-solid fa-gavel mr-1"></i>Bieding gesloten</span></td>
+                                <td class="p-4 text-right"><button class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-500">Gunning bespreken</button></td>
+                            </tr>
+                            <tr class="task-row border-b border-slate-800/50 hover:bg-slate-800/50 transition" data-type="aankoop">
+                                <td class="p-4"><span class="bg-teal-500/20 text-teal-400 px-2 py-1 rounded text-xs font-bold">Aankoop</span></td>
+                                <td class="p-4">
+                                    <p class="font-bold text-white">Singel 1</p>
+                                    <p class="text-xs text-slate-500">W. Jansen</p>
+                                </td>
+                                <td class="p-4"><span class="text-slate-300 text-xs"><i class="fa-solid fa-eye mr-1"></i>Bezichtiging gepland</span></td>
+                                <td class="p-4 text-right"><button onclick="switchView('aankoop')" class="bg-slate-700 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-600 border border-slate-600">Bekijk details</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VIEW 2: AANKOOPDOSSIERS -->
+            <div id="view-aankoop" class="hidden fade-in">
+                <div class="mb-8">
+                    <h1 class="text-2xl font-bold text-white mb-1">Aankoopdossiers</h1>
+                    <p class="text-sm text-slate-400">Objecten waar u optreedt als aankoopmakelaar voor geverifieerde cliënten.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col group hover:border-teal-500 transition-colors">
+                        <div class="h-40 relative overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=600&q=80" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 bg-teal-500 text-slate-900 text-xs font-bold px-2 py-1 rounded shadow-sm">Actief traject</div>
+                        </div>
+                        <div class="p-5 flex-1 flex flex-col">
+                            <h3 class="text-lg font-bold text-white mb-1">Vondelstraat 44</h3>
+                            <p class="text-sm text-slate-400 mb-4">Cliënt: S. de Vries (Geverifieerd budget: € 675k)</p>
+                            <div class="bg-slate-800 rounded-lg p-3 mb-4 text-sm border border-slate-700">
+                                <div class="flex justify-between mb-1"><span class="text-slate-400">Vraagprijs:</span><span class="text-white font-medium">€ 620.000</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Status:</span><span class="text-teal-400 font-medium">Klaar om te bieden</span></div>
+                            </div>
+                            <button onclick="switchView('bidding-sim')" class="w-full mt-auto py-2.5 bg-slate-800 hover:bg-teal-600 text-white border border-slate-700 hover:border-teal-500 rounded-lg text-sm font-bold transition">Naar biedlogboek</button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col group hover:border-teal-500 transition-colors">
+                        <div class="h-40 relative overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded shadow-sm">Gegund</div>
+                        </div>
+                        <div class="p-5 flex-1 flex flex-col">
+                            <h3 class="text-lg font-bold text-white mb-1">Keizersgracht 112</h3>
+                            <p class="text-sm text-slate-400 mb-4">Cliënt: K. de Jong (Geverifieerd budget: € 900k)</p>
+                            <div class="bg-slate-800 rounded-lg p-3 mb-4 text-sm border border-slate-700">
+                                <div class="flex justify-between mb-1"><span class="text-slate-400">Winnend bod:</span><span class="text-white font-medium">€ 875.000</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Status:</span><span class="text-green-400 font-medium">Wacht op notaris</span></div>
+                            </div>
+                            <button class="w-full mt-auto py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-lg text-sm font-bold transition">Bekijk dossier</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: VERKOOPDOSSIERS -->
+            <div id="view-verkoop" class="hidden fade-in relative">
+                
+                <!-- Nieuw Dossier Modal/Overlay -->
+                <div id="new-dossier-modal" class="hidden absolute inset-0 z-50 bg-slate-950/80 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    <div class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-8 w-full max-w-lg">
+                        <div id="modal-step-form">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-xl font-bold text-white">Nieuw verkoopdossier</h2>
+                                <button onclick="closeNewDossier()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+                            </div>
+                            <div class="space-y-4 mb-6">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Postcode & huisnummer</label>
+                                    <input type="text" value="1018 ZS, 4" class="w-full bg-slate-950 border border-slate-700 rounded p-3 text-white text-sm outline-none focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Geadviseerde vraagprijs</label>
+                                    <input type="text" value="€ 650.000" class="w-full bg-slate-950 border border-slate-700 rounded p-3 text-white text-sm outline-none focus:border-blue-500">
+                                </div>
+                                <div class="p-3 bg-slate-800 rounded border border-slate-700 text-xs text-slate-300">
+                                    <i class="fa-solid fa-circle-info text-blue-400 mr-1"></i> Er wordt direct een 'Digital twin' token op de Nexum blockchain aangemaakt.
+                                </div>
+                            </div>
+                            <button onclick="simulateTokenization()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition shadow-md">Genereer smart contract & token</button>
+                        </div>
+                        
+                        <!-- Modal Loading State -->
+                        <div id="modal-step-loading" class="hidden text-center py-8">
+                            <i class="fa-solid fa-cube text-blue-500 text-5xl mb-4 animate-bounce"></i>
+                            <h3 class="text-lg font-bold text-white mb-2">Tokenisatie bezig...</h3>
+                            <p class="text-sm text-slate-400">Gegevens synchroniseren met Kadaster Oracle.</p>
+                        </div>
+                        
+                        <!-- Modal Success State -->
+                        <div id="modal-step-success" class="hidden text-center py-8">
+                            <i class="fa-solid fa-circle-check text-green-500 text-5xl mb-4"></i>
+                            <h3 class="text-lg font-bold text-white mb-2">Woning geregistreerd</h3>
+                            <p class="text-sm text-slate-400 mb-4">Token succesvol aangemaakt op de blockchain.</p>
+                            <p class="text-xs font-mono text-teal-400 bg-teal-500/10 p-2 rounded mb-6 border border-teal-500/20">0x2a9f...e4b1</p>
+                            <button onclick="closeNewDossier()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded-lg transition">Sluiten</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-8 flex justify-between items-end">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white mb-1">Verkoopdossiers</h1>
+                        <p class="text-sm text-slate-400">Uw objecten in de verkoop en token-beheer.</p>
+                    </div>
+                    <button onclick="openNewDossier()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg transition flex items-center">
+                        <i class="fa-solid fa-plus mr-2"></i> Nieuw dossier aanmaken
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="verkoop-grid">
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col group hover:border-blue-500 transition-colors">
+                        <div class="h-40 relative overflow-hidden">
+                            <img src="vooraanzicht.jpg" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Vooraanzicht">
+                            <div class="absolute top-3 left-3 bg-amber-400 text-slate-900 text-xs font-bold px-2 py-1 rounded shadow-sm">Pre-market</div>
+                        </div>
+                        <div class="p-5 flex-1 flex flex-col">
+                            <div class="flex justify-between items-start mb-1">
+                                <h3 class="text-lg font-bold text-white">Talmastraat 26</h3>
+                                <span class="text-[10px] text-slate-500 font-mono bg-slate-800 px-1 rounded">0x71C...8976</span>
+                            </div>
+                            <p class="text-sm text-slate-400 mb-4">Weesp</p>
+                            <div class="bg-slate-800 rounded-lg p-3 mb-4 text-sm border border-slate-700">
+                                <div class="flex justify-between mb-1"><span class="text-slate-400">Vraagprijs:</span><span class="text-white font-medium">€ 645.000</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Bieders:</span><span class="text-blue-400 font-medium">Wacht op start</span></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mt-auto">
+                                <button class="py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-lg text-xs font-bold transition">Object data</button>
+                                <button onclick="switchView('bidding-sim')" class="py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition shadow-md">Live veiling</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 4: BIDDING SIMULATION (Live Logboek) -->
+            <div id="view-bidding-sim" class="hidden fade-in">
+                <button onclick="switchView('tasks')" class="text-slate-400 hover:text-white text-sm mb-6 flex items-center transition"><i class="fa-solid fa-arrow-left mr-2"></i> Terug</button>
+                
+                <div class="bg-[#0f172a] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+                    <div class="bg-slate-900 p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-800">
+                        <div>
+                            <div class="inline-block bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-xs font-bold mb-3 border border-blue-500/30">
+                                Bieding actief
+                            </div>
+                            <h2 class="text-2xl font-bold text-white mb-1">Talmastraat 26, Weesp</h2>
+                            <p class="text-sm text-slate-400 font-mono"><i class="fa-solid fa-cube text-teal-500 mr-1"></i> Token: 0x71C...8976F</p>
+                        </div>
+                        <div class="text-left md:text-right">
+                            <p class="text-slate-400 text-xs uppercase tracking-widest font-bold mb-1">Huidig hoogste bod</p>
+                            <h3 id="sim-highest-bid" class="text-4xl font-black text-teal-400">€ 0</h3>
+                            <p class="text-slate-500 text-xs mt-1">Vraagprijs: € 645.000</p>
+                        </div>
+                    </div>
+
+                    <div class="p-6 md:p-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-bold text-white">Live biedlogboek</h4>
+                            <button id="sim-start-btn" onclick="startLogboekSim()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded text-xs font-bold transition shadow-md">
+                                <i class="fa-solid fa-play mr-1"></i> Ontvang biedingen
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto bg-slate-900 rounded-xl border border-slate-800">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-800/50 text-slate-400 border-b border-slate-800">
+                                    <tr>
+                                        <th class="px-6 py-4 font-semibold">Tijdstip</th>
+                                        <th class="px-6 py-4 font-semibold">Bieder</th>
+                                        <th class="px-6 py-4 font-semibold">Bedrag</th>
+                                        <th class="px-6 py-4 font-semibold">Zekerheid</th>
+                                        <th class="px-6 py-4 font-semibold text-right">Actie</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sim-tbody" class="divide-y divide-slate-800/50 text-slate-300">
+                                    <tr><td colspan="5" class="px-6 py-8 text-center text-slate-500 italic">Wachten op biedingen...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 6: PERFORMANCE / KANTOOR PRESTATIES -->
+            <div id="view-performance" class="hidden fade-in">
+                <div class="mb-8">
+                    <h1 class="text-2xl font-bold text-white mb-1"><i class="fa-solid fa-ranking-star text-blue-500 mr-2"></i>Performance</h1>
+                    <p class="text-sm text-slate-400">Uw prestaties, marktaandeel en de Nexum accuracy score. Bepalend voor uw zichtbaarheid op het platform.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg border-t-4 border-t-blue-500">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Nexum accuracy score</p>
+                        <p class="text-3xl font-bold text-white">9.4 <span class="text-sm text-slate-500 font-normal">/ 10</span></p>
+                        <p class="text-xs text-green-400 mt-2"><i class="fa-solid fa-arrow-trend-up mr-1"></i> Top 5% regio Amsterdam</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Gemiddelde doorlooptijd</p>
+                        <p class="text-3xl font-bold text-white">18 <span class="text-sm text-slate-500 font-normal">dagen</span></p>
+                        <p class="text-xs text-green-400 mt-2"><i class="fa-solid fa-stopwatch mr-1"></i> 4 dagen sneller dan gem.</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Lead conversie</p>
+                        <p class="text-3xl font-bold text-teal-400">42%</p>
+                        <p class="text-xs text-slate-500 mt-2">Van Nexum leads naar klant</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Marktaandeel Weesp</p>
+                        <p class="text-3xl font-bold text-white">15.2%</p>
+                        <p class="text-xs text-slate-500 mt-2">Groeitrend zichtbaar</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg lg:col-span-2">
+                        <h3 class="text-sm font-bold text-slate-300 uppercase tracking-wider mb-4">Taxatie vs. realisatie (laatste 6 mnd)</h3>
+                        <div class="relative h-64 w-full">
+                            <canvas id="accuracyChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 shadow-lg">
+                            <h3 class="text-sm font-bold text-white mb-4">Score opbouw</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">Prijs accuratesse</span><span class="text-green-400 font-bold">9.8</span></div>
+                                    <div class="w-full bg-slate-800 rounded-full h-1.5"><div class="bg-green-400 h-1.5 rounded-full" style="width: 98%"></div></div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">Snelheid dossier</span><span class="text-blue-400 font-bold">9.2</span></div>
+                                    <div class="w-full bg-slate-800 rounded-full h-1.5"><div class="bg-blue-400 h-1.5 rounded-full" style="width: 92%"></div></div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs mb-1"><span class="text-slate-400">Transparantie (biedlog)</span><span class="text-amber-400 font-bold">8.5</span></div>
+                                    <div class="w-full bg-slate-800 rounded-full h-1.5"><div class="bg-amber-400 h-1.5 rounded-full" style="width: 85%"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-blue-900/20 border border-blue-500/30 rounded-xl p-6">
+                            <p class="text-sm text-blue-400 font-bold mb-2"><i class="fa-solid fa-medal mr-2"></i>Gold partner status</p>
+                            <p class="text-xs text-blue-200/70">Door uw hoge accuratesse-score worden uw objecten 2x vaker aangeraden aan geverifieerde kopers en accorderen banken uw taxaties zonder extra menselijke controle.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 7: FINANCE & FACTURATIE -->
+            <div id="view-finance" class="hidden fade-in">
+                <div class="mb-8 flex justify-between items-end">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white mb-1">Finance & facturatie</h1>
+                        <p class="text-sm text-slate-400">Financieel overzicht, verwachte courtages en Nexum platformkosten.</p>
+                    </div>
+                    <button class="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm font-bold border border-slate-700 transition flex items-center shadow-md">
+                        <i class="fa-solid fa-download mr-2"></i> Exporteer overzicht
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Gerealiseerde courtage (YTD)</p>
+                        <p class="text-3xl font-bold text-white">€ 142.500</p>
+                        <p class="text-xs text-green-400 mt-2"><i class="fa-solid fa-arrow-trend-up mr-1"></i> +18% vs vorig kwartaal</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Nexum platform fees (YTD)</p>
+                        <p class="text-3xl font-bold text-blue-400">€ 4.250</p>
+                        <p class="text-xs text-slate-500 mt-2">Kosten leadgeneratie & transacties</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-lg border-l-4 border-l-amber-500">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Onderhanden werk (pipeline)</p>
+                        <p class="text-3xl font-bold text-amber-500">€ 24.800</p>
+                        <p class="text-xs text-slate-500 mt-2">Wacht op overdracht notaris</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden shadow-xl">
+                    <div class="p-6 border-b border-slate-800">
+                        <h3 class="text-lg font-bold text-white">Transacties & afrekeningen</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-800/50 text-xs uppercase tracking-wider text-slate-400 border-b border-slate-800">
+                                    <th class="p-4 font-semibold">Datum</th>
+                                    <th class="p-4 font-semibold">Dossier / object</th>
+                                    <th class="p-4 font-semibold">Courtage (bruto)</th>
+                                    <th class="p-4 font-semibold">Nexum fee</th>
+                                    <th class="p-4 font-semibold text-right">Status</th>
+                                    <th class="p-4 font-semibold text-center">Factuur</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm text-slate-300">
+                                <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                                    <td class="p-4 text-slate-400">10 Mrt 2026</td>
+                                    <td class="p-4">
+                                        <p class="font-bold text-white">Keizersgracht 112</p>
+                                        <p class="text-xs text-slate-500">Verkoop (gegund)</p>
+                                    </td>
+                                    <td class="p-4 font-medium text-white">€ 6.850</td>
+                                    <td class="p-4 text-blue-400">- € 250</td>
+                                    <td class="p-4 text-right"><span class="px-2 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-xs font-bold">Wacht op notaris</span></td>
+                                    <td class="p-4 text-center text-slate-500"><i class="fa-solid fa-clock"></i></td>
+                                </tr>
+                                <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                                    <td class="p-4 text-slate-400">28 Feb 2026</td>
+                                    <td class="p-4">
+                                        <p class="font-bold text-white">Vondelstraat 44</p>
+                                        <p class="text-xs text-slate-500">Aankoop</p>
+                                    </td>
+                                    <td class="p-4 font-medium text-white">€ 4.200</td>
+                                    <td class="p-4 text-blue-400">- € 150</td>
+                                    <td class="p-4 text-right"><span class="px-2 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded text-xs font-bold">Uitbetaald</span></td>
+                                    <td class="p-4 text-center"><button class="text-slate-400 hover:text-white transition"><i class="fa-regular fa-file-pdf"></i></button></td>
+                                </tr>
+                                <tr class="border-b border-slate-800/50 hover:bg-slate-800/30 transition-colors">
+                                    <td class="p-4 text-slate-400">14 Feb 2026</td>
+                                    <td class="p-4">
+                                        <p class="font-bold text-white">Singel 1</p>
+                                        <p class="text-xs text-slate-500">Verkoop</p>
+                                    </td>
+                                    <td class="p-4 font-medium text-white">€ 5.100</td>
+                                    <td class="p-4 text-blue-400">- € 250</td>
+                                    <td class="p-4 text-right"><span class="px-2 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded text-xs font-bold">Uitbetaald</span></td>
+                                    <td class="p-4 text-center"><button class="text-slate-400 hover:text-white transition"><i class="fa-regular fa-file-pdf"></i></button></td>
+                                </tr>
+                                <tr class="hover:bg-slate-800/30 transition-colors">
+                                    <td class="p-4 text-slate-400">01 Feb 2026</td>
+                                    <td class="p-4">
+                                        <p class="font-bold text-white">Nexum lead generatie</p>
+                                        <p class="text-xs text-slate-500">Abonnement & leads (januari)</p>
+                                    </td>
+                                    <td class="p-4 font-medium text-slate-500">-</td>
+                                    <td class="p-4 text-red-400 font-medium">- € 120</td>
+                                    <td class="p-4 text-right"><span class="px-2 py-1 bg-slate-700 text-slate-300 rounded text-xs font-bold">Afgeschreven</span></td>
+                                    <td class="p-4 text-center"><button class="text-slate-400 hover:text-white transition"><i class="fa-regular fa-file-pdf"></i></button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Javascript Logic -->
+    <script>
+        // Settings Slide-over
+        function toggleSettings() {
+            const panel = document.getElementById('settings-panel');
+            const overlay = document.getElementById('settings-overlay');
+            panel.classList.toggle('open');
+            overlay.classList.toggle('open');
+        }
+
+        // View Switching
+        function switchView(viewId) {
+            const targetBtn = document.getElementById(`nav-${viewId}`);
+            if(targetBtn) {
+                document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('nav-active'));
+                targetBtn.classList.add('nav-active');
+            }
+            
+            const views = ['view-tasks', 'view-aankoop', 'view-verkoop', 'view-bidding-sim', 'view-performance', 'view-finance'];
+            views.forEach(v => {
+                const el = document.getElementById(v);
+                if(el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('block');
+                }
+            });
+
+            const activeView = document.getElementById(`view-${viewId}`);
+            if(activeView) {
+                activeView.classList.remove('hidden');
+                activeView.classList.add('block');
+            }
+
+            if (viewId === 'performance' && !window.accChart) initChart();
+        }
+
+        // Tasks Filtering
+        function filterTasks(type) {
+            document.querySelectorAll('.task-filter-btn').forEach(btn => {
+                btn.classList.remove('bg-slate-700', 'text-white');
+                btn.classList.add('text-slate-400', 'hover:text-white');
+            });
+            const activeBtn = document.getElementById('filter-btn-' + type);
+            if(activeBtn) {
+                activeBtn.classList.remove('text-slate-400', 'hover:text-white');
+                activeBtn.classList.add('bg-slate-700', 'text-white');
+            }
+
+            document.querySelectorAll('.task-row').forEach(row => {
+                if (type === 'all' || row.dataset.type === type) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Verkoop Modal & Token Simulatie
+        function openNewDossier() {
+            document.getElementById('new-dossier-modal').classList.remove('hidden');
+            document.getElementById('modal-step-form').classList.remove('hidden');
+            document.getElementById('modal-step-loading').classList.add('hidden');
+            document.getElementById('modal-step-success').classList.add('hidden');
+        }
+        
+        function closeNewDossier() {
+            document.getElementById('new-dossier-modal').classList.add('hidden');
+        }
+
+        function simulateTokenization() {
+            document.getElementById('modal-step-form').classList.add('hidden');
+            document.getElementById('modal-step-loading').classList.remove('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('modal-step-loading').classList.add('hidden');
+                document.getElementById('modal-step-success').classList.remove('hidden');
+                
+                const grid = document.getElementById('verkoop-grid');
+                if(grid) {
+                    const newCard = document.createElement('div');
+                    newCard.className = "bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg flex flex-col group hover:border-blue-500 transition-colors flash-row";
+                    newCard.innerHTML = `
+                        <div class="h-40 relative overflow-hidden bg-slate-800 flex items-center justify-center">
+                            <i class="fa-solid fa-house text-4xl text-slate-600"></i>
+                            <div class="absolute top-3 left-3 bg-slate-700 text-slate-300 text-xs font-bold px-2 py-1 rounded shadow-sm">Concept</div>
+                        </div>
+                        <div class="p-5 flex-1 flex flex-col">
+                            <div class="flex justify-between items-start mb-1">
+                                <h3 class="text-lg font-bold text-white">Nieuwe woning</h3>
+                                <span class="text-[10px] text-teal-400 font-mono bg-teal-500/10 px-1 rounded border border-teal-500/20">0x2a9f...e4b1</span>
+                            </div>
+                            <p class="text-sm text-slate-400 mb-4">1018 ZS Amsterdam</p>
+                            <div class="bg-slate-800 rounded-lg p-3 mb-4 text-sm border border-slate-700">
+                                <div class="flex justify-between mb-1"><span class="text-slate-400">Vraagprijs:</span><span class="text-white font-medium">€ 650.000</span></div>
+                                <div class="flex justify-between"><span class="text-slate-400">Status:</span><span class="text-slate-500 font-medium">Wacht op publicatie</span></div>
+                            </div>
+                            <div class="grid grid-cols-1 mt-auto">
+                                <button class="py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold transition shadow-md">Dossier afronden</button>
+                            </div>
+                        </div>
+                    `;
+                    grid.insertBefore(newCard, grid.firstChild);
+                }
+            }, 2500);
+        }
+
+        // Biedlogboek Simulatie
+        const mockBidsLog = [
+            { time: "12 Feb, 10:05", bieder: "#992", bedrag: 665000, zekerheid: "Voorbehoud financiering", zColor: "text-amber-400", zBg: "bg-amber-500/10 border-amber-500/20" },
+            { time: "Gisteren, 19:15", bieder: "#109", bedrag: 680000, zekerheid: "100% Geverifieerd (Nexum)", zColor: "text-green-400", zBg: "bg-green-500/10 border-green-500/20" },
+            { time: "Vandaag, 14:32", bieder: "#482", bedrag: 685000, zekerheid: "100% Geverifieerd (Nexum)", zColor: "text-green-400", zBg: "bg-green-500/10 border-green-500/20" }
+        ];
+
+        function startLogboekSim() {
+            const btn = document.getElementById('sim-start-btn');
+            if(btn) {
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Bezig...';
+                btn.disabled = true;
+                btn.classList.add('opacity-50');
+            }
+
+            const tbody = document.getElementById('sim-tbody');
+            if(!tbody) return;
+            tbody.innerHTML = ''; 
+
+            let currentIndex = 0;
+            const interval = setInterval(() => {
+                if (currentIndex >= mockBidsLog.length) {
+                    clearInterval(interval);
+                    if(btn) {
+                        btn.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Veiling compleet';
+                        btn.classList.remove('opacity-50', 'bg-blue-600');
+                        btn.classList.add('bg-green-600');
+                    }
+                    return;
+                }
+
+                const bid = mockBidsLog[currentIndex];
+                const formattedPrice = "€ " + bid.bedrag.toLocaleString('nl-NL');
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-800/50 flash-row";
+                
+                const isWinner = currentIndex === mockBidsLog.length - 1;
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 text-slate-500 text-sm">${bid.time}</td>
+                    <td class="px-6 py-4 font-bold text-white">${bid.bieder}</td>
+                    <td class="px-6 py-4 font-extrabold ${isWinner ? 'text-teal-400 text-lg' : 'text-slate-300 text-base'}">${formattedPrice}</td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 rounded text-xs font-bold border ${bid.zBg} ${bid.zColor}">${bid.zekerheid}</span></td>
+                    <td class="px-6 py-4 text-right">
+                        ${isWinner 
+                            ? `<button class="bg-teal-600 hover:bg-teal-500 text-white px-3 py-1.5 rounded text-xs font-bold shadow-md transition">Gun bod</button>` 
+                            : `<span class="text-slate-500 text-xs">Overboden</span>`
+                        }
+                    </td>
+                `;
+
+                tbody.insertBefore(tr, tbody.firstChild);
+                const headerPrice = document.getElementById('sim-highest-bid');
+                if(headerPrice) headerPrice.innerText = formattedPrice;
+
+                currentIndex++;
+            }, 1200);
+        }
+
+        // Performance Chart Initialization
+        function initChart() {
+            const ctx = document.getElementById('accuracyChart').getContext('2d');
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = 'Inter';
+            window.accChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun'],
+                    datasets: [
+                        { label: 'Gem. taxatie', data: [450, 460, 455, 480, 490, 500], borderColor: '#3b82f6', tension: 0.4 },
+                        { label: 'Gem. verkooprijs', data: [452, 465, 451, 485, 492, 505], borderColor: '#14b8a6', borderDash: [5, 5], tension: 0.4 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { tooltip: { mode: 'index', intersect: false } },
+                    scales: { y: { grid: { color: '#1e293b' } }, x: { grid: { display: false } } }
+                }
+            });
+        }
+
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', () => {
+            switchView('tasks');
+        });
+    </script>
+</body>
+</html>
