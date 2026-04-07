@@ -216,12 +216,12 @@
     /* ─── Testimonials carousel ───────────────────────────── */
     .carousel-wrapper { overflow:hidden; position:relative; }
     .carousel-fade-l {
-      position:absolute; left:0; top:0; bottom:0; width:100px;
+      position:absolute; left:0; top:0; bottom:0; width:80px;
       background:linear-gradient(to right,#f8fafc,transparent);
       z-index:2; pointer-events:none;
     }
     .carousel-fade-r {
-      position:absolute; right:0; top:0; bottom:0; width:100px;
+      position:absolute; right:0; top:0; bottom:0; width:80px;
       background:linear-gradient(to left,#f8fafc,transparent);
       z-index:2; pointer-events:none;
     }
@@ -232,7 +232,7 @@
       100% { transform:translateX(-50%); }
     }
     .testimonial-card {
-      flex-shrink:0; width:380px; margin-right:24px;
+      flex-shrink:0; width:min(380px, 85vw); margin-right:24px;
       background:#ffffff; border:1px solid #e2e8f0; border-radius:20px; padding:32px;
     }
 
@@ -268,7 +268,29 @@
     }
     .section-heading { font-size:36px; font-weight:700; color:#0f172a; line-height:1.2; margin-bottom:16px; }
     .section-sub { font-size:18px; color:#64748b; line-height:1.6; max-width:600px; }
-    @media (max-width:768px) { .section-heading { font-size:28px; } .stat-value { font-size:32px; } }
+    @media (max-width:768px) {
+      .section-heading { font-size:26px; }
+      .section-sub { font-size:16px; }
+      .stat-value { font-size:32px; }
+      /* Hide step connectors on mobile — they're meant for the horizontal desktop layout */
+      .steps-grid .step-card:not(:last-child)::after { display:none; }
+      /* Tighten hero padding */
+      .hero-section { padding-top:40px; padding-bottom:40px; }
+      /* Modal: scrollable and tighter padding on small screens */
+      .demo-modal-card { padding:28px 20px; max-height:90vh; overflow-y:auto; }
+      /* Testimonial card: reduce padding on mobile */
+      .testimonial-card { padding:24px; }
+      /* Carousel fades narrower on mobile */
+      .carousel-fade-l, .carousel-fade-r { width:32px; }
+      /* Stab buttons: smaller on mobile */
+      .stab-btn { font-size:12px; padding:6px 12px; }
+      /* Tab buttons: smaller on mobile */
+      .tab-btn { font-size:13px; padding:8px 16px; }
+      /* Product screens: reduce padding */
+      .product-screen { padding:16px; }
+      /* Mockup card: reduce padding */
+      .mockup-card { padding:18px; }
+    }
 
     /* ─── Score bar ───────────────────────────────────────── */
     .score-bar-bg { background:rgba(255,255,255,.08); border-radius:4px; height:5px; }
@@ -454,7 +476,7 @@
       <h2 class="section-heading" data-i18n="products.headline">Built for every transaction</h2>
       <p class="section-sub mx-auto" data-i18n="products.subheadline">One platform. All stakeholders. Every step of the transaction — handled.</p>
     </div>
-    <div class="flex gap-2 flex-wrap mb-10 p-1 bg-slate-50 rounded-xl border border-slate-200 w-fit mx-auto reveal">
+    <div class="flex gap-2 flex-wrap mb-10 p-1 bg-slate-50 rounded-xl border border-slate-200 w-full sm:w-fit mx-auto reveal">
       <button class="tab-btn active" data-tab="bybrickq" onclick="switchTab(this,'bybrickq')" data-i18n="products.tab.bybrickq">By Brickq</button>
       <button class="tab-btn" data-tab="rental"    onclick="switchTab(this,'rental')"    data-i18n="products.tab.rental">Huurmarkt</button>
       <button class="tab-btn" data-tab="investment" onclick="switchTab(this,'investment')" data-i18n="products.tab.investment">Beleggingsmarkt</button>
