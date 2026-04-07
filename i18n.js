@@ -306,10 +306,14 @@ function setLanguage(lang) {
     localStorage.setItem('nexum-lang-override', lang);
   } catch (e) {}
 
-  // Update URL (clean routing)
+  // Update URL (clean routing — base-path aware for subpath deployments)
   try {
-    var targetPath = lang === 'nl' ? '/nl' : '/';
-    if (window.location.pathname !== targetPath) {
+    var cur = window.location.pathname;
+    // Strip trailing /nl or /nl/ to get the base path
+    var base = cur.replace(/\/nl\/?$/, '');
+    if (!base.endsWith('/')) base += '/';
+    var targetPath = lang === 'nl' ? base + 'nl' : base;
+    if (cur !== targetPath) {
       history.pushState(null, '', targetPath);
     }
   } catch (e) {}
