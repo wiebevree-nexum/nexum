@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "nexum-site",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", "-p", "8787", "."],
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": ["-c", "PATH=/opt/homebrew/bin:$PATH /opt/homebrew/bin/node /opt/homebrew/lib/node_modules/npm/bin/npx-cli.js serve -p 8787 '/Users/wiebevree/Desktop/Nexum Real Estate B.V./Demo website'"],
       "port": 8787
     }
   ]
