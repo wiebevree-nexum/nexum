@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partners — Brickq.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background:#f8fafc; color:#334155; }
+        .partner-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:40px 32px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; transition:box-shadow 0.2s; min-height:160px; }
+        .partner-card:hover { box-shadow:0 8px 32px rgba(0,0,0,0.10); }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Nav -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="consumer.html" class="text-2xl font-extrabold tracking-tight" style="font-family:'Inter',sans-serif;color:#0f172a;">Brickq<span style="color:#14b8a6;">.</span></a>
+            <a href="consumer.html" class="text-sm font-semibold text-slate-500 hover:text-slate-900 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-left text-xs"></i> Terug
+            </a>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <!-- Hero -->
+        <div class="bg-white border-b border-slate-100 py-20 px-6 text-center">
+            <span class="text-xs font-bold uppercase tracking-widest text-teal-500 mb-3 block">Ecosysteem</span>
+            <h1 class="text-4xl font-extrabold text-slate-900 mb-4">Onze Partners</h1>
+            <p class="text-lg text-slate-500 max-w-xl mx-auto">Samen bouwen we aan een transparante vastgoedmarkt.</p>
+        </div>
+
+        <!-- Partner grid -->
+        <div class="max-w-5xl mx-auto py-20 px-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+
+                <!-- Fractional Mission -->
+                <div class="partner-card">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style="background:#0f172a;">
+                        <span class="text-white font-bold text-lg">F</span>
+                    </div>
+                    <div class="font-bold text-slate-900 text-base mb-1">Fractional Mission</div>
+                    <div class="text-xs text-slate-400">Fractioneel vastgoedinvesteren</div>
+                </div>
+
+                <!-- Von Poll Real Estate -->
+                <div class="partner-card">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style="background:#1a1a2e;">
+                        <span class="text-white font-bold text-lg">VP</span>
+                    </div>
+                    <div class="font-bold text-slate-900 text-base mb-1">Von Poll Real Estate</div>
+                    <div class="text-xs text-slate-400">Internationaal makelaarskantoor</div>
+                </div>
+
+                <!-- Ockto -->
+                <div class="partner-card">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style="background:#0ea5e9;">
+                        <span class="text-white font-bold text-lg">O</span>
+                    </div>
+                    <div class="font-bold text-slate-900 text-base mb-1">Ockto</div>
+                    <div class="text-xs text-slate-400">Data-verificatie via Rijksoverheid</div>
+                </div>
+
+                <!-- Cleverbase -->
+                <div class="partner-card">
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style="background:#7c3aed;">
+                        <span class="text-white font-bold text-lg">CB</span>
+                    </div>
+                    <div class="font-bold text-slate-900 text-base mb-1">Cleverbase</div>
+                    <div class="text-xs text-slate-400">DigiD-dienstverlener</div>
+                </div>
+            </div>
+
+            <!-- Word partner CTA -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-12 text-center">
+                <h2 class="text-2xl font-bold text-slate-900 mb-3">Word partner</h2>
+                <p class="text-slate-500 mb-8 max-w-lg mx-auto">Wil jij deel uitmaken van de nationale vastgoedinfrastructuur? We werken samen met makelaars, banken, notarissen, en technologiepartners.</p>
+                <a href="mailto:partners@bybrickq.com" class="inline-flex items-center gap-2 font-bold text-white px-8 py-4 rounded-full transition hover:opacity-90" style="background:#14b8a6;">
+                    Neem contact op <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer style="background:#0f172a;" class="text-white">
+        <div class="max-w-7xl mx-auto px-6 py-10">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-slate-500">
+                <span class="text-xl font-extrabold" style="color:#fff;">Brickq<span style="color:#14b8a6;">.</span></span>
+                <span>© 2025 Nexum Real Estate B.V. — Alle rechten voorbehouden</span>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
