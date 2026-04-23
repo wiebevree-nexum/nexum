@@ -213,6 +213,37 @@
         }
         .stap-label { flex: 1; }
         .stap-arrow { color: var(--nx-teal); opacity: 0; transition: opacity 0.12s ease; font-size: 16px; line-height: 1; }
+
+        /* ─── How-it-works steps ────────────────────────────── */
+        .hiw-section-label {
+            font-size:12px; font-weight:700; letter-spacing:.10em;
+            text-transform:uppercase; color:#14b8a6; margin-bottom:12px;
+        }
+        .hiw-section-heading { font-size:36px; font-weight:700; color:#0f172a; line-height:1.2; margin-bottom:16px; }
+        .hiw-section-sub { font-size:18px; color:#64748b; line-height:1.6; max-width:600px; }
+        .hiw-step-card {
+            background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:28px 24px;
+            position:relative;
+        }
+        .hiw-step-num {
+            font-size:52px; font-weight:800; color:#e2e8f0; line-height:1; margin-bottom:14px;
+        }
+        .hiw-steps-grid .hiw-step-card:not(:last-child)::after {
+            content:''; position:absolute; top:32px; right:-20px;
+            width:40px; height:2px;
+            background:linear-gradient(to right,#e2e8f0,#14b8a6);
+        }
+        .hiw-step-animate { opacity:0; transform:translateY(22px); }
+        @keyframes hiw-step-in {
+            from { opacity:0; transform:translateY(22px); }
+            to   { opacity:1; transform:none; }
+        }
+        .hiw-step-animate.visible { animation: hiw-step-in .5s ease-out forwards; }
+        @media (max-width:768px) {
+            .hiw-section-heading { font-size:26px; }
+            .hiw-section-sub { font-size:16px; }
+            .hiw-steps-grid .hiw-step-card:not(:last-child)::after { display:none; }
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -314,36 +345,54 @@
                 </div>
             </div>
 
-            <!-- Hoe Nexum de markt verandert -->
-            <div style="background:#ffffff;border-bottom:1px solid #f1f5f9;">
-            <div class="max-w-7xl mx-auto py-24 px-6">
-                <div class="text-center mb-16">
-                    <h2 class="text-3xl font-bold text-slate-900">Hoe Nexum de markt verandert</h2>
+            <!-- By Brickq doet het anders -->
+            <div class="py-24 bg-slate-50">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-16">
+                        <div class="hiw-section-label">Hoe het werkt</div>
+                        <h2 class="hiw-section-heading" style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;"><span style="font-family:'Inter',sans-serif;font-weight:800;color:#0f172a;letter-spacing:-.02em;">Brickq<span style="color:#14b8a6;">.</span></span> doet het anders</h2>
+                        <p class="hiw-section-sub mx-auto">Van eerste contact tot tekenen — één overzichtelijke, geverifieerde flow.</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 hiw-steps-grid">
+
+                        <div class="hiw-step-card hiw-step-animate">
+                            <div class="hiw-step-num">01</div>
+                            <div style="width:44px;height:44px;border-radius:10px;background:#f0fdfa;border:1px solid #99f6e4;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                                <i class="fa-solid fa-id-card" style="font-size:18px;color:#14b8a6;"></i>
+                            </div>
+                            <h3 style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:10px;">Geverifieerd profiel</h3>
+                            <p style="font-size:14px;color:#64748b;line-height:1.6;margin:0;">Kopers verifiëren hun identiteit via iDIN en koppelen financiële data via Ockto. Één profiel, geldig voor elke By Brickq-transactie.</p>
+                        </div>
+
+                        <div class="hiw-step-card hiw-step-animate">
+                            <div class="hiw-step-num">02</div>
+                            <div style="width:44px;height:44px;border-radius:10px;background:#f0fdfa;border:1px solid #99f6e4;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                                <i class="fa-solid fa-gavel" style="font-size:18px;color:#14b8a6;"></i>
+                            </div>
+                            <h3 style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:10px;">Transparant bieden</h3>
+                            <p style="font-size:14px;color:#64748b;line-height:1.6;margin:0;">Elk bod wordt onveranderlijk vastgelegd. Kopers zien het volledige biedlogboek in realtime. Geen verborgen biedingen, geen informatieasymmetrie.</p>
+                        </div>
+
+                        <div class="hiw-step-card hiw-step-animate">
+                            <div class="hiw-step-num">03</div>
+                            <div style="width:44px;height:44px;border-radius:10px;background:#f0fdfa;border:1px solid #99f6e4;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                                <i class="fa-solid fa-landmark" style="font-size:18px;color:#14b8a6;"></i>
+                            </div>
+                            <h3 style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:10px;">Hypotheekveiling</h3>
+                            <p style="font-size:14px;color:#64748b;line-height:1.6;margin:0;">Banken concurreren live om jouw hypotheek. Time-to-Yes onder 5 minuten. Financieringszekerheid voordat de verkoop definitief is.</p>
+                        </div>
+
+                        <div class="hiw-step-card hiw-step-animate">
+                            <div class="hiw-step-num">04</div>
+                            <div style="width:44px;height:44px;border-radius:10px;background:#f0fdfa;border:1px solid #99f6e4;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                                <i class="fa-solid fa-file-signature" style="font-size:18px;color:#14b8a6;"></i>
+                            </div>
+                            <h3 style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:10px;">Digitale akte</h3>
+                            <p style="font-size:14px;color:#64748b;line-height:1.6;margin:0;">De notaris ontvangt een vooraf ingevuld dossier. AI vult het aktesjabloon in. Blockchain verankert de definitieve overdracht. Klaar.</p>
+                        </div>
+
+                    </div>
                 </div>
-                <div class="grid md:grid-cols-3 gap-12 text-center">
-                    <div>
-                        <div class="w-16 h-16 mx-auto bg-[#e6f7f4] rounded-2xl flex items-center justify-center mb-6 text-[#14b8a6] text-2xl shadow-sm">
-                            <i class="fa-solid fa-eye"></i>
-                        </div>
-                        <h3 class="text-lg font-bold mb-3 text-slate-900">100% transparant</h3>
-                        <p class="text-slate-500 text-sm leading-relaxed">Geen gesloten enveloppen meer. Zie realtime wat anderen bieden en weet direct waar je aan toe bent in het proces.</p>
-                    </div>
-                    <div>
-                        <div class="w-16 h-16 mx-auto bg-blue-50 rounded-2xl flex items-center justify-center mb-6 text-blue-500 text-2xl shadow-sm">
-                            <i class="fa-solid fa-user-check"></i>
-                        </div>
-                        <h3 class="text-lg font-bold mb-3 text-slate-900">Vooraf geverifieerd</h3>
-                        <p class="text-slate-500 text-sm leading-relaxed">Bied met zekerheid. Jouw financiële profiel is vooraf getoetst via de Rijksoverheid (iDIN/Ockto), wat vertrouwen geeft aan de verkoper.</p>
-                    </div>
-                    <div>
-                        <div class="w-16 h-16 mx-auto bg-indigo-50 rounded-2xl flex items-center justify-center mb-6 text-indigo-500 text-2xl shadow-sm">
-                            <i class="fa-solid fa-bolt"></i>
-                        </div>
-                        <h3 class="text-lg font-bold mb-3 text-slate-900">Instant hypotheek</h3>
-                        <p class="text-slate-500 text-sm leading-relaxed">Bod gewonnen? Binnen enkele minuten veilen we jouw geverifieerde dossier langs 14 banken voor de scherpste rente.</p>
-                    </div>
-                </div>
-            </div>
             </div>
 
             <!-- Over Nexum (Nieuwe sectie) -->
@@ -2852,6 +2901,21 @@
             });
         });
 
+    // ─── Staggered how-it-works steps ───────────────────────────
+    (function () {
+        var grid = document.querySelector('.hiw-steps-grid');
+        if (!grid) return;
+        var steps = Array.from(grid.querySelectorAll('.hiw-step-animate'));
+        var done = false;
+        new IntersectionObserver(function (entries) {
+            if (entries[0].isIntersecting && !done) {
+                done = true;
+                steps.forEach(function (s, i) {
+                    setTimeout(function () { s.classList.add('visible'); }, i * 230);
+                });
+            }
+        }, { threshold: 0.15 }).observe(grid);
+    }());
     </script>
 
     <!-- ═══════════════════════════════════════════════ -->
