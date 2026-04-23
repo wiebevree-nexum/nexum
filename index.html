@@ -87,8 +87,29 @@
     .lang-switcher button:hover { color:#0f172a; }
     .lang-switcher button.lang-active { color:#14b8a6; background:#f0fdfa; }
     .lang-sep { color:#e2e8f0; font-size:13px; }
-    #mobile-menu { overflow:hidden; max-height:0; transition:max-height .3s ease; }
-    #mobile-menu.open { max-height:500px; }
+    #mobile-menu {
+      display: none;
+      position: fixed;
+      top: 64px; left: 0; right: 0; bottom: 0;
+      background: #ffffff;
+      z-index: 48;
+      overflow-y: auto;
+      border-top: 1px solid #e2e8f0;
+    }
+    #mobile-menu.open { display: block; animation: slideDown .22s ease; }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: none; }
+    }
+    .ham-bar {
+      display: block; width: 22px; height: 2px;
+      background: currentColor; border-radius: 2px;
+      transition: transform .22s ease, opacity .15s ease;
+    }
+    .ham-bar + .ham-bar { margin-top: 5px; }
+    #mobile-menu-btn.is-open .ham-bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    #mobile-menu-btn.is-open .ham-bar:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    #mobile-menu-btn.is-open .ham-bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
     /* ─── Hero ────────────────────────────────────────────── */
     .hero-section {
@@ -268,28 +289,71 @@
     }
     .section-heading { font-size:36px; font-weight:700; color:#0f172a; line-height:1.2; margin-bottom:16px; }
     .section-sub { font-size:18px; color:#64748b; line-height:1.6; max-width:600px; }
-    @media (max-width:768px) {
+    @media (max-width:767px) {
+      /* Typography */
       .section-heading { font-size:26px; }
       .section-sub { font-size:16px; }
       .stat-value { font-size:32px; }
-      /* Hide step connectors on mobile — they're meant for the horizontal desktop layout */
-      .steps-grid .step-card:not(:last-child)::after { display:none; }
-      /* Tighten hero padding */
+
+      /* Hero */
       .hero-section { padding-top:40px; padding-bottom:40px; }
-      /* Modal: scrollable and tighter padding on small screens */
+      .hero-section h1 { font-size: clamp(28px, 7.5vw, 40px) !important; }
+
+      /* Mockup card & product screens */
+      .mockup-card { padding:16px; max-width:100%; }
+      .product-screen { padding:14px; max-width:100%; }
+      #product-screens { max-width:100%; }
+
+      /* How-it-works: 2×2 grid */
+      .steps-grid { grid-template-columns: repeat(2,1fr) !important; gap:10px; }
+      .steps-grid .step-card:not(:last-child)::after { display:none; }
+      .step-card {
+        background:#ffffff; border:1px solid #e2e8f0;
+        border-radius:14px; padding:16px; cursor:pointer;
+        min-height:130px; transition:border-color .15s,box-shadow .15s;
+      }
+      .step-card.step-active { border-color:#14b8a6; box-shadow:0 0 0 3px rgba(20,184,166,.12); }
+      .step-card p { display:none; }
+      .step-num { font-size:28px; margin-bottom:8px; }
+      #step-expand {
+        display:none; grid-column:1/-1;
+        background:#f0fdfa; border:1px solid #99f6e4;
+        border-radius:14px; padding:16px 20px; margin-top:2px;
+        animation:fadeIn .2s ease;
+      }
+      #step-expand.open { display:block; }
+
+      /* Product tabs: horizontal scroll */
+      .tabs-scroll-outer {
+        overflow-x:auto; -webkit-overflow-scrolling:touch;
+        scrollbar-width:none; margin-bottom:20px;
+      }
+      .tabs-scroll-outer::-webkit-scrollbar { display:none; }
+      .tabs-scroll-outer > div { min-width:max-content; }
+
+      /* Stab-tabs: horizontal scroll */
+      .stab-scroll-outer {
+        overflow-x:auto; -webkit-overflow-scrolling:touch;
+        scrollbar-width:none; margin-bottom:20px;
+      }
+      .stab-scroll-outer::-webkit-scrollbar { display:none; }
+      .stab-scroll-outer > div { min-width:max-content; display:flex; gap:8px; }
+
+      /* Touch targets */
+      .tab-btn { min-height:44px; font-size:13px; padding:8px 16px; display:inline-flex; align-items:center; }
+      .stab-btn { min-height:44px; font-size:12px; padding:6px 14px; display:inline-flex; align-items:center; }
+      .btn-primary, .btn-secondary { min-height:44px; }
+
+      /* Modal */
       .demo-modal-card { padding:28px 20px; max-height:90vh; overflow-y:auto; }
-      /* Testimonial card: reduce padding on mobile */
+
+      /* Testimonials */
       .testimonial-card { padding:24px; }
-      /* Carousel fades narrower on mobile */
       .carousel-fade-l, .carousel-fade-r { width:32px; }
-      /* Stab buttons: smaller on mobile */
-      .stab-btn { font-size:12px; padding:6px 12px; }
-      /* Tab buttons: smaller on mobile */
-      .tab-btn { font-size:13px; padding:8px 16px; }
-      /* Product screens: reduce padding */
-      .product-screen { padding:16px; }
-      /* Mockup card: reduce padding */
-      .mockup-card { padding:18px; }
+    }
+    @media (min-width:768px) {
+      #step-expand { display:none !important; }
+      .step-card p { display:block; }
     }
 
     /* ─── Score bar ───────────────────────────────────────── */
@@ -355,19 +419,28 @@
         <button data-lang-btn="nl" onclick="setLanguage('nl')">NL</button>
       </div>
       <a href="#" class="btn-primary hidden md:inline-flex" style="font-size:14px;padding:9px 20px;" onclick="openDemoModal();return false;" data-i18n="nav.demo-cta">Request a demo</a>
-      <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors" onclick="toggleMobileMenu()">
-        <i class="fa-solid fa-bars text-lg"></i>
+      <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors flex flex-col justify-center" onclick="toggleMobileMenu()" aria-label="Menu" style="width:40px;height:40px;">
+        <span class="ham-bar"></span>
+        <span class="ham-bar"></span>
+        <span class="ham-bar"></span>
       </button>
     </div>
   </div>
   <div id="mobile-menu">
-    <nav class="border-t border-slate-100 bg-white px-4 py-4 flex flex-col gap-1">
-      <a href="consumer.html" class="px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50" data-i18n="nav.mobile.consumer">Buyers &amp; sellers</a>
-      <a href="banking.html"  class="px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50" data-i18n="nav.mobile.banking">Banks</a>
-      <a href="notary.html"   class="px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50" data-i18n="nav.mobile.notary">Notaries</a>
-      <a href="realtor.html"  class="px-3 py-2.5 rounded-lg text-sm text-slate-700 hover:bg-slate-50" data-i18n="nav.mobile.realtor">Agents</a>
-      <div class="mt-2 pt-3 border-t border-slate-100">
-        <a href="#" class="btn-primary w-full justify-center" onclick="openDemoModal();return false;" data-i18n="nav.demo-cta">Request a demo</a>
+    <nav class="px-4 pt-4 pb-6 flex flex-col gap-1">
+      <a href="consumer.html" class="flex items-center px-4 rounded-xl text-base font-500 text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors" style="min-height:52px;font-size:16px;font-weight:500;" data-i18n="nav.mobile.consumer">Buyers &amp; sellers</a>
+      <a href="banking.html"  class="flex items-center px-4 rounded-xl text-base text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors" style="min-height:52px;font-size:16px;font-weight:500;" data-i18n="nav.mobile.banking">Banks</a>
+      <a href="notary.html"   class="flex items-center px-4 rounded-xl text-base text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors" style="min-height:52px;font-size:16px;font-weight:500;" data-i18n="nav.mobile.notary">Notaries</a>
+      <a href="realtor.html"  class="flex items-center px-4 rounded-xl text-base text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors" style="min-height:52px;font-size:16px;font-weight:500;" data-i18n="nav.mobile.realtor">Agents</a>
+      <div class="mt-2 pt-4 border-t border-slate-100 flex items-center justify-between px-1">
+        <div class="lang-switcher">
+          <button data-lang-btn="en" onclick="setLanguage('en')">EN</button>
+          <span class="lang-sep">|</span>
+          <button data-lang-btn="nl" onclick="setLanguage('nl')">NL</button>
+        </div>
+      </div>
+      <div class="mt-3">
+        <a href="#" class="btn-primary w-full justify-center" onclick="openDemoModal();closeMobileMenu();return false;" data-i18n="nav.demo-cta" style="width:100%;display:flex;">Request a demo</a>
       </div>
     </nav>
   </div>
@@ -380,7 +453,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
       <div>
         <div class="section-label">Nexum Real Estate B.V.</div>
-        <h1 style="font-family:'Poppins',sans-serif;font-size:clamp(40px,5vw,62px);font-weight:700;color:#0f172a;line-height:1.12;margin-bottom:20px;letter-spacing:-.02em;">
+        <h1 style="font-family:'Poppins',sans-serif;font-size:clamp(30px,6.5vw,62px);font-weight:700;color:#0f172a;line-height:1.12;margin-bottom:20px;letter-spacing:-.02em;">
           <span data-i18n="hero.headline.pre">The transaction rail for&nbsp;</span><span style="color:#14b8a6;" data-i18n="hero.headline.accent">Dutch real estate</span>
         </h1>
         <p style="font-size:18px;color:#475569;line-height:1.7;margin-bottom:32px;max-width:500px;" data-i18n="hero.subheading">Nexum connects buyers, sellers, agents, banks and notaries in one verified, transparent transaction — from first bid to final deed.</p>
@@ -476,10 +549,12 @@
       <h2 class="section-heading" data-i18n="products.headline">Built for every transaction</h2>
       <p class="section-sub mx-auto" data-i18n="products.subheadline">One platform. All stakeholders. Every step of the transaction — handled.</p>
     </div>
-    <div class="flex gap-2 flex-wrap mb-10 p-1 bg-slate-50 rounded-xl border border-slate-200 w-full sm:w-fit mx-auto reveal">
-      <button class="tab-btn active" data-tab="bybrickq" onclick="switchTab(this,'bybrickq')" data-i18n="products.tab.bybrickq">By Brickq</button>
-      <button class="tab-btn" data-tab="rental"    onclick="switchTab(this,'rental')"    data-i18n="products.tab.rental">Huurmarkt</button>
-      <button class="tab-btn" data-tab="investment" onclick="switchTab(this,'investment')" data-i18n="products.tab.investment">Beleggingsmarkt</button>
+    <div class="tabs-scroll-outer reveal mb-10 sm:flex sm:justify-center">
+      <div class="flex gap-2 p-1 bg-slate-50 rounded-xl border border-slate-200 w-full sm:w-fit">
+        <button class="tab-btn active" data-tab="bybrickq" onclick="switchTab(this,'bybrickq')" data-i18n="products.tab.bybrickq">By Brickq</button>
+        <button class="tab-btn" data-tab="rental"    onclick="switchTab(this,'rental')"    data-i18n="products.tab.rental">Huurmarkt</button>
+        <button class="tab-btn" data-tab="investment" onclick="switchTab(this,'investment')" data-i18n="products.tab.investment">Beleggingsmarkt</button>
+      </div>
     </div>
 
     <!-- BY BRICKQ PANEL -->
@@ -493,12 +568,14 @@
           <p style="font-size:16px;color:#475569;line-height:1.7;margin-bottom:28px;" data-i18n="products.bybrickq.body">The centralized platform for buying and selling residential property in the Netherlands. Verified bidding, mortgage auctions, and notarial automation — all in one place.</p>
 
           <!-- Stakeholder sub-tabs -->
-          <div class="flex flex-wrap gap-2 mb-5">
-            <button class="stab-btn active" data-stab="buyers"   onclick="switchStab(this,'buyers')"   data-i18n="products.stab.buyers">Buyers</button>
-            <button class="stab-btn" data-stab="sellers"  onclick="switchStab(this,'sellers')"  data-i18n="products.stab.sellers">Sellers</button>
-            <button class="stab-btn" data-stab="agents"   onclick="switchStab(this,'agents')"   data-i18n="products.stab.agents">Agents</button>
-            <button class="stab-btn" data-stab="banks"    onclick="switchStab(this,'banks')"    data-i18n="products.stab.banks">Banks</button>
-            <button class="stab-btn" data-stab="notaries" onclick="switchStab(this,'notaries')" data-i18n="products.stab.notaries">Notaries</button>
+          <div class="stab-scroll-outer">
+            <div class="flex flex-wrap gap-2">
+              <button class="stab-btn active" data-stab="buyers"   onclick="switchStab(this,'buyers')"   data-i18n="products.stab.buyers">Buyers</button>
+              <button class="stab-btn" data-stab="sellers"  onclick="switchStab(this,'sellers')"  data-i18n="products.stab.sellers">Sellers</button>
+              <button class="stab-btn" data-stab="agents"   onclick="switchStab(this,'agents')"   data-i18n="products.stab.agents">Agents</button>
+              <button class="stab-btn" data-stab="banks"    onclick="switchStab(this,'banks')"    data-i18n="products.stab.banks">Banks</button>
+              <button class="stab-btn" data-stab="notaries" onclick="switchStab(this,'notaries')" data-i18n="products.stab.notaries">Notaries</button>
+            </div>
           </div>
 
           <div style="background:#f8fafc;border-radius:12px;padding:20px;border:1px solid #e2e8f0;min-height:100px;">
@@ -780,9 +857,9 @@
       <h2 class="section-heading" data-i18n="how.headline">How it works</h2>
       <p class="section-sub mx-auto" data-i18n="how.subheadline">From first contact to final deed — one continuous, verified flow.</p>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 steps-grid">
+    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8 steps-grid">
 
-      <div class="step-card step-animate" style="position:relative;">
+      <div class="step-card step-animate" style="position:relative;" data-step="1" data-desc-key="how.step1.desc" onclick="toggleStep(this)" tabindex="0">
         <div class="step-num" data-i18n="how.step1.num">01</div>
         <div style="width:44px;height:44px;border-radius:10px;background:#f0fdfa;border:1px solid #99f6e4;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
           <i class="fa-solid fa-id-card" style="font-size:18px;color:#14b8a6;"></i>
@@ -791,7 +868,7 @@
         <p style="font-size:14px;color:#64748b;line-height:1.6;margin:0;" data-i18n="how.step1.desc">Buyers verify their identity via iDIN and connect financial data via Ockto. One profile, valid across every Nexum transaction.</p>
       </div>
 
-      <div class="step-card step-animate" style="position:relative;">
+      <div class="step-card step-animate" style="position:relative;" data-step="2" data-desc-key="how.step2.desc" onclick="toggleStep(this)" tabindex="0">
         <div class="step-num" data-i18n="how.step2.num">02</div>
         <div style="width:44px;height:44px;border-radius:10px;background:#f0fdfa;border:1px solid #99f6e4;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
           <i class="fa-solid fa-gavel" style="font-size:18px;color:#14b8a6;"></i>
@@ -800,7 +877,7 @@
         <p style="font-size:14px;color:#64748b;line-height:1.6;margin:0;" data-i18n="how.step2.desc">Every bid is logged immutably. Buyers see the full bid log in real time. No hidden bids, no information asymmetry.</p>
       </div>
 
-      <div class="step-card step-animate" style="position:relative;">
+      <div class="step-card step-animate" style="position:relative;" data-step="3" data-desc-key="how.step3.desc" onclick="toggleStep(this)" tabindex="0">
         <div class="step-num" data-i18n="how.step3.num">03</div>
         <div style="width:44px;height:44px;border-radius:10px;background:#f0fdfa;border:1px solid #99f6e4;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
           <i class="fa-solid fa-landmark" style="font-size:18px;color:#14b8a6;"></i>
@@ -809,7 +886,7 @@
         <p style="font-size:14px;color:#64748b;line-height:1.6;margin:0;" data-i18n="how.step3.desc">Banks compete live for the buyer's mortgage. Time-to-Yes under 5 minutes. Financing certainty before the sale is final.</p>
       </div>
 
-      <div class="step-card step-animate" style="position:relative;">
+      <div class="step-card step-animate" style="position:relative;" data-step="4" data-desc-key="how.step4.desc" onclick="toggleStep(this)" tabindex="0">
         <div class="step-num" data-i18n="how.step4.num">04</div>
         <div style="width:44px;height:44px;border-radius:10px;background:#f0fdfa;border:1px solid #99f6e4;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
           <i class="fa-solid fa-file-signature" style="font-size:18px;color:#14b8a6;"></i>
@@ -817,6 +894,9 @@
         <h3 style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:10px;" data-i18n="how.step4.title">Digital deed</h3>
         <p style="font-size:14px;color:#64748b;line-height:1.6;margin:0;" data-i18n="how.step4.desc">The notary receives a pre-filled dossier. AI populates the deed template. Blockchain anchors the final transfer. Done.</p>
       </div>
+
+      <!-- Mobile accordion expand panel (hidden on desktop via CSS) -->
+      <div id="step-expand" aria-live="polite"></div>
 
     </div>
   </div>
@@ -1048,8 +1128,49 @@ document.addEventListener('click', function (e) {
 
 // ─── Mobile menu ─────────────────────────────────────────────
 function toggleMobileMenu() {
-  var m = document.getElementById('mobile-menu');
-  if (m) m.classList.toggle('open');
+  var m   = document.getElementById('mobile-menu');
+  var btn = document.getElementById('mobile-menu-btn');
+  if (!m) return;
+  var opening = !m.classList.contains('open');
+  m.classList.toggle('open');
+  if (btn) btn.classList.toggle('is-open');
+  document.body.style.overflow = opening ? 'hidden' : '';
+}
+function closeMobileMenu() {
+  var m   = document.getElementById('mobile-menu');
+  var btn = document.getElementById('mobile-menu-btn');
+  if (m)   m.classList.remove('open');
+  if (btn) btn.classList.remove('is-open');
+  document.body.style.overflow = '';
+}
+
+// ─── Step accordion (mobile 2×2 grid) ───────────────────────
+function toggleStep(card) {
+  if (window.innerWidth >= 768) return; // desktop: no accordion
+  var expand = document.getElementById('step-expand');
+  if (!expand) return;
+  var stepNum = card.getAttribute('data-step');
+  var descKey = card.getAttribute('data-desc-key');
+  var isOpen  = card.classList.contains('step-active');
+  // Deactivate all cards
+  document.querySelectorAll('.step-card').forEach(function (c) { c.classList.remove('step-active'); });
+  if (isOpen) {
+    expand.classList.remove('open');
+    expand.innerHTML = '';
+    return;
+  }
+  // Find description text from the hidden <p> in the card
+  var p = card.querySelector('p');
+  var h = card.querySelector('h3');
+  var titleText = h ? h.textContent.trim() : '';
+  var descText  = p ? p.textContent.trim() : '';
+  expand.innerHTML =
+    '<div style="font-size:13px;font-weight:700;color:#0d9488;margin-bottom:6px;">Stap ' + stepNum + ' — ' + titleText + '</div>' +
+    '<p style="font-size:14px;color:#334155;line-height:1.65;margin:0;">' + descText + '</p>';
+  card.classList.add('step-active');
+  expand.classList.add('open');
+  // Scroll panel into view
+  setTimeout(function () { expand.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 80);
 }
 
 // ─── Tab switching ───────────────────────────────────────────
