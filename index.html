@@ -225,12 +225,13 @@
     .stakeholder-card {
       background:#ffffff; border:1px solid #e2e8f0; border-radius:16px; padding:28px 24px;
       transition:box-shadow .2s, transform .2s, border-color .2s;
+      display:flex; flex-direction:column;
     }
     .stakeholder-card:hover { box-shadow:0 8px 32px rgba(15,23,42,.08); transform:translateY(-3px); border-color:#14b8a6; }
     .teal-arrow-link {
       display:inline-flex; align-items:center; gap:5px;
       font-size:13px; font-weight:600; color:#14b8a6; text-decoration:none;
-      margin-top:16px; transition:gap .15s;
+      margin-top:auto; padding-top:16px; transition:gap .15s;
     }
     .teal-arrow-link:hover { gap:8px; }
 
@@ -398,7 +399,7 @@
           <i class="fa-solid fa-chevron-down chevron"></i>
         </button>
         <div class="dropdown-menu">
-          <a href="consumer.html" class="dropdown-item"><span data-i18n="nav.bybrickq">By Brickq</span></a>
+          <a href="/consumer" class="dropdown-item"><span data-i18n="nav.bybrickq">By Brickq</span></a>
           <div class="dropdown-item" style="cursor:default;opacity:.6;">
             <span data-i18n="nav.rental">Rental market</span>
             <span class="soon-badge" data-i18n="nav.soon">coming soon</span>
@@ -428,10 +429,10 @@
   </div>
   <div id="mobile-menu">
     <nav class="px-4 pt-4 pb-6 flex flex-col gap-1">
-      <a href="consumer.html" class="flex items-center px-4 rounded-xl text-base font-500 text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors" style="min-height:52px;font-size:16px;font-weight:500;" data-i18n="nav.mobile.consumer">Buyers &amp; sellers</a>
-      <a href="banking.html"  class="flex items-center px-4 rounded-xl text-base text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors" style="min-height:52px;font-size:16px;font-weight:500;" data-i18n="nav.mobile.banking">Banks</a>
-      <a href="notary.html"   class="flex items-center px-4 rounded-xl text-base text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors" style="min-height:52px;font-size:16px;font-weight:500;" data-i18n="nav.mobile.notary">Notaries</a>
-      <a href="realtor.html"  class="flex items-center px-4 rounded-xl text-base text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors" style="min-height:52px;font-size:16px;font-weight:500;" data-i18n="nav.mobile.realtor">Agents</a>
+      <a href="/consumer" class="flex items-center px-4 rounded-xl text-base font-500 text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors" style="min-height:52px;font-size:16px;font-weight:500;" data-i18n="nav.mobile.consumer">Buyers &amp; sellers</a>
+      <a href="/banking"  class="flex items-center px-4 rounded-xl text-base text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors" style="min-height:52px;font-size:16px;font-weight:500;" data-i18n="nav.mobile.banking">Banks</a>
+      <a href="/notary"   class="flex items-center px-4 rounded-xl text-base text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors" style="min-height:52px;font-size:16px;font-weight:500;" data-i18n="nav.mobile.notary">Notaries</a>
+      <a href="/realtor"  class="flex items-center px-4 rounded-xl text-base text-slate-700 hover:bg-slate-50 hover:text-teal-600 transition-colors" style="min-height:52px;font-size:16px;font-weight:500;" data-i18n="nav.mobile.realtor">Agents</a>
       <div class="mt-2 pt-4 border-t border-slate-100 flex items-center justify-between px-1">
         <div class="lang-switcher">
           <button data-lang-btn="en" onclick="setLanguage('en')">EN</button>
@@ -918,7 +919,7 @@
         </div>
         <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:8px;" data-i18n="stakeholders.buyers.name">Buyers</h3>
         <p style="font-size:13px;color:#64748b;line-height:1.6;margin:0;" data-i18n="stakeholders.buyers.promise">Transparent bidding, verified status, and a mortgage in under 3 minutes.</p>
-        <a href="consumer.html" class="teal-arrow-link" data-i18n="stakeholders.buyers.link">View portal <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i></a>
+        <a href="/consumer" class="teal-arrow-link" data-i18n="stakeholders.buyers.link">View portal <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i></a>
       </div>
       <div class="stakeholder-card reveal reveal-delay-1">
         <div style="width:42px;height:42px;border-radius:10px;background:#f0fdfa;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
@@ -926,7 +927,7 @@
         </div>
         <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:8px;" data-i18n="stakeholders.sellers.name">Sellers</h3>
         <p style="font-size:13px;color:#64748b;line-height:1.6;margin:0;" data-i18n="stakeholders.sellers.promise">Live bid log, blockchain-anchored property token, and financing certainty per bid.</p>
-        <a href="consumer.html" class="teal-arrow-link" data-i18n="stakeholders.sellers.link">View portal <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i></a>
+        <a href="/consumer" class="teal-arrow-link" data-i18n="stakeholders.sellers.link">View portal <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i></a>
       </div>
       <div class="stakeholder-card reveal reveal-delay-2">
         <div style="width:42px;height:42px;border-radius:10px;background:#f0fdfa;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
@@ -934,7 +935,7 @@
         </div>
         <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:8px;" data-i18n="stakeholders.agents.name">Agents</h3>
         <p style="font-size:13px;color:#64748b;line-height:1.6;margin:0;" data-i18n="stakeholders.agents.promise">Agent Accuracy Index, Certified Partner badge, and 35% fewer transaction delays.</p>
-        <a href="realtor.html" class="teal-arrow-link" data-i18n="stakeholders.agents.link">View portal <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i></a>
+        <a href="/realtor" class="teal-arrow-link" data-i18n="stakeholders.agents.link">View portal <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i></a>
       </div>
       <div class="stakeholder-card reveal reveal-delay-3">
         <div style="width:42px;height:42px;border-radius:10px;background:#f0fdfa;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
@@ -942,7 +943,7 @@
         </div>
         <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:8px;" data-i18n="stakeholders.banks.name">Banks</h3>
         <p style="font-size:13px;color:#64748b;line-height:1.6;margin:0;" data-i18n="stakeholders.banks.promise">Pre-validated KYC dossiers and Time-to-Yes under 5 minutes.</p>
-        <a href="banking.html" class="teal-arrow-link" data-i18n="stakeholders.banks.link">View portal <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i></a>
+        <a href="/banking" class="teal-arrow-link" data-i18n="stakeholders.banks.link">View portal <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i></a>
       </div>
       <div class="stakeholder-card reveal reveal-delay-4">
         <div style="width:42px;height:42px;border-radius:10px;background:#f0fdfa;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
@@ -950,7 +951,7 @@
         </div>
         <h3 style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:8px;" data-i18n="stakeholders.notaries.name">Notaries</h3>
         <p style="font-size:13px;color:#64748b;line-height:1.6;margin:0;" data-i18n="stakeholders.notaries.promise">70% less admin. AI-prefilled deed templates. KNB and Kadaster integrations.</p>
-        <a href="notary.html" class="teal-arrow-link" data-i18n="stakeholders.notaries.link">View portal <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i></a>
+        <a href="/notary" class="teal-arrow-link" data-i18n="stakeholders.notaries.link">View portal <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i></a>
       </div>
     </div>
   </div>
@@ -1023,10 +1024,10 @@
         <div style="font-size:12px;color:#94a3b8;" data-i18n="footer.tagline">The transaction rail for Dutch real estate.</div>
       </div>
       <nav class="flex flex-wrap gap-6 text-sm justify-center">
-        <a href="consumer.html" style="color:#64748b;text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#14b8a6'" onmouseout="this.style.color='#64748b'" data-i18n="footer.consumer">Buyers &amp; sellers</a>
-        <a href="banking.html"  style="color:#64748b;text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#14b8a6'" onmouseout="this.style.color='#64748b'" data-i18n="footer.banking">Banks</a>
-        <a href="notary.html"   style="color:#64748b;text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#14b8a6'" onmouseout="this.style.color='#64748b'" data-i18n="footer.notary">Notaries</a>
-        <a href="realtor.html"  style="color:#64748b;text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#14b8a6'" onmouseout="this.style.color='#64748b'" data-i18n="footer.realtor">Agents</a>
+        <a href="/consumer" style="color:#64748b;text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#14b8a6'" onmouseout="this.style.color='#64748b'" data-i18n="footer.consumer">Buyers &amp; sellers</a>
+        <a href="/banking"  style="color:#64748b;text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#14b8a6'" onmouseout="this.style.color='#64748b'" data-i18n="footer.banking">Banks</a>
+        <a href="/notary"   style="color:#64748b;text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#14b8a6'" onmouseout="this.style.color='#64748b'" data-i18n="footer.notary">Notaries</a>
+        <a href="/realtor"  style="color:#64748b;text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#14b8a6'" onmouseout="this.style.color='#64748b'" data-i18n="footer.realtor">Agents</a>
       </nav>
       <div class="flex items-center gap-5">
         <div class="lang-switcher">

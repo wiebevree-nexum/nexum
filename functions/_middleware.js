@@ -9,7 +9,7 @@ export async function onRequest(context) {
 
   // bybrickq.com root → consumer portal (301)
   if ((host === 'bybrickq.com' || host === 'www.bybrickq.com') && url.pathname === '/') {
-    return Response.redirect('https://bybrickq.com/consumer.html', 301);
+    return Response.redirect('https://bybrickq.com/consumer', 301);
   }
 
   return context.next();
