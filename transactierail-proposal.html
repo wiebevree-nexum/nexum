@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexum — Transactierail proposal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #334155; min-height: 100vh; }
+
+    /* ---- Rail ---- */
+    .rail-seg { height: 2px; flex: 1; transition: background .4s; }
+    .rail-dot { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; transition: all .2s; }
+    .rail-dot:hover { transform: scale(1.1); }
+    .rail-dot.done { background: #14b8a6; }
+    .rail-dot.active { background: #f0fdfa; border: 2px solid #14b8a6; }
+    .rail-dot.pending { background: #f8fafc; border: 2px solid #e2e8f0; }
+    .rail-dot.active i { color: #0d9488; }
+    .rail-dot.pending i { color: #94a3b8; }
+    .rail-dot.done i { color: #fff; }
+
+    /* ---- Tabs ---- */
+    .tab-btn { padding: 11px 20px; background: none; border: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #94a3b8; border-bottom: 2px solid transparent; transition: all .2s; white-space: nowrap; display: flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif; }
+    .tab-btn:hover { color: #64748b; }
+    .tab-btn.active { color: #0d9488; border-bottom-color: #14b8a6; }
+    .tab-btn.disabled { color: #cbd5e1; cursor: not-allowed; }
+
+    /* ---- Cards ---- */
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; }
+    .card-inset { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; }
+
+    /* ---- Badges ---- */
+    .badge { border-radius: 6px; font-size: 10px; font-weight: 700; padding: 2px 8px; letter-spacing: .02em; }
+    .badge-teal  { background: #f0fdfa; color: #0d9488; border: 1px solid #99f6e4; }
+    .badge-green { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .badge-amber { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .badge-red   { background: #fef2f2; color: #991b1b; border: 1px solid #fca5a5; }
+    .badge-slate { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+
+    /* ---- Status dots ---- */
+    .dot-green  { width: 7px; height: 7px; border-radius: 50%; background: #10b981; flex-shrink: 0; }
+    .dot-amber  { width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; flex-shrink: 0; animation: pulse-a 2s infinite; }
+
+    /* ---- Panels ---- */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: grid; grid-template-columns: 300px 1fr 280px; gap: 16px; }
+
+    /* ---- Check rows ---- */
+    .chk { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f1f5f9; }
+    .chk:last-child { border: none; }
+    .chk-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 8px; font-weight: 900; }
+    .chk-done  { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+    .chk-warn  { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+    .chk-pend  { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
+    .chk-act   { background: #f0fdfa; color: #0d9488; border: 1px solid #99f6e4; }
+
+    /* ---- Metric ---- */
+    .metric { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; }
+    .m-val  { font-size: 20px; font-weight: 800; color: #0f172a; line-height: 1; margin-bottom: 4px; }
+    .m-lbl  { font-size: 10px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+
+    /* ---- Timeline ---- */
+    .tl { padding-bottom: 18px; display: flex; gap: 14px; position: relative; }
+    .tl:not(:last-child)::before { content: ''; position: absolute; left: 9px; top: 22px; width: 2px; bottom: 0; background: #e2e8f0; }
+    .tl.done::before { background: #14b8a6; }
+    .tl-dot { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 900; margin-top: 1px; }
+    .tl-done { background: #14b8a6; color: #fff; }
+    .tl-curr { background: #f0fdfa; border: 2px solid #14b8a6; color: #0d9488; }
+    .tl-pend { background: #f8fafc; border: 2px solid #e2e8f0; color: #94a3b8; }
+
+    /* ---- Progress bar ---- */
+    .pbar-track { background: #e2e8f0; border-radius: 99px; height: 5px; overflow: hidden; }
+    .pbar-fill  { border-radius: 99px; height: 5px; background: #14b8a6; transition: width .5s; }
+
+    /* ---- Action card ---- */
+    .action-card { background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; padding: 16px; }
+
+    /* ---- Entry chip ---- */
+    .entry-chip { display: inline-flex; align-items: center; gap: 6px; background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 20px; padding: 4px 12px; font-size: 11px; color: #0d9488; font-weight: 600; margin-bottom: 14px; }
+
+    /* ---- Locked overlay ---- */
+    .locked-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 40px; text-align: center; border: 1px dashed #e2e8f0; border-radius: 12px; background: #ffffff; }
+
+    /* ---- Interactive hover ---- */
+    .row-hover { transition: background .15s; border-radius: 8px; padding: 8px; margin: -8px; cursor: pointer; }
+    .row-hover:hover { background: #f8fafc; }
+
+    /* ---- Rail detail panel ---- */
+    #rail-detail { overflow: hidden; max-height: 0; transition: max-height .35s ease; }
+    #rail-detail.open { max-height: 200px; }
+
+    /* ---- Anims ---- */
+    @keyframes pulse-a { 0%,100%{opacity:1} 50%{opacity:.4} }
+    @keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(20,184,166,.3)} 70%{box-shadow:0 0 0 7px rgba(20,184,166,0)} 100%{box-shadow:0 0 0 0 rgba(20,184,166,0)} }
+    .pulse { animation: pulse-ring 2s infinite; }
+
+    /* ---- Buttons ---- */
+    .btn-primary { background: #14b8a6; color: #fff; border: none; border-radius: 8px; font-family:'Inter',sans-serif; font-size:13px; font-weight:700; padding:10px 18px; cursor:pointer; width:100%; transition:opacity .15s; }
+    .btn-primary:hover { opacity:.85; }
+    .btn-ghost { background: none; color: #64748b; border: 1px solid #e2e8f0; border-radius: 8px; font-family:'Inter',sans-serif; font-size:12px; font-weight:600; padding:8px 14px; cursor:pointer; transition:all .15s; }
+    .btn-ghost:hover { border-color:#cbd5e1; color:#475569; }
+
+    hr.rule { border:none; border-top:1px solid #f1f5f9; }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div style="background:#ffffff; border-bottom:1px solid #e2e8f0; padding:14px 28px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50;">
+  <div style="display:flex; align-items:center; gap:14px;">
+    <span style="font-size:18px; font-weight:800; color:#fff; background:#0f172a; padding:4px 10px; border-radius:7px; letter-spacing:-.3px;">Nexum<span style="color:#14b8a6">.</span></span>
+    <div style="width:1px; height:20px; background:#e2e8f0;"></div>
+    <div>
+      <p style="font-size:12px; font-weight:700; color:#334155; letter-spacing:.01em;">Transactierail</p>
+      <p style="font-size:10px; color:#94a3b8; margin-top:1px;">Voorstel v2 · gedeelde dealview per stakeholder</p>
+    </div>
+  </div>
+  <div style="display:flex; align-items:center; gap:8px;">
+    <span style="font-size:10px; color:#94a3b8; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:4px 10px; font-weight:600;">7 mei 2026</span>
+  </div>
+</div>
+
+<div style="max-width:1100px; margin:0 auto; padding:24px 24px 80px;">
+
+  <!-- DEAL IDENTITY -->
+  <div class="card" style="padding:20px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:16px;">
+    <div style="display:flex; align-items:center; gap:16px;">
+      <div style="width:42px; height:42px; background:#f0fdfa; border:1px solid #99f6e4; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <i class="fa-solid fa-house" style="color:#14b8a6; font-size:16px;"></i>
+      </div>
+      <div>
+        <p style="font-size:17px; font-weight:800; color:#0f172a; letter-spacing:-.2px;">Talmastraat 26, Weesp</p>
+        <p style="font-size:12px; color:#94a3b8; margin-top:2px;">
+          Koopsom <span style="color:#334155; font-weight:600;">€ 565.000</span>
+          &nbsp;·&nbsp; Koper <span style="color:#334155; font-weight:600;">M. de Vries</span>
+          &nbsp;·&nbsp; Verkoper <span style="color:#334155; font-weight:600;">J. Bakker</span>
+          &nbsp;·&nbsp; Makelaar <span style="color:#334155; font-weight:600;">Maasland Wonen</span>
+        </p>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <span class="badge badge-green"><i class="fa-solid fa-lock" style="margin-right:4px; font-size:8px;"></i>Blockchain-verankerd</span>
+      <span class="badge badge-slate">Zaak #2026-0847</span>
+      <div style="background:#f0fdfa; border:1px solid #99f6e4; border-radius:7px; padding:5px 12px; font-size:11px; color:#0d9488; font-weight:700; display:flex; align-items:center; gap:5px;">
+        <div class="dot-amber" style="background:#14b8a6; animation:pulse-ring 2s infinite;"></div>Live
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSACTION RAIL -->
+  <div class="card" style="padding:20px 28px; margin-bottom:12px;">
+    <p style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.08em; margin-bottom:16px;">Voortgang transactie — klik op een stap voor details</p>
+    <div style="display:flex; align-items:center;" id="rail-row">
+
+      <div style="display:flex; flex-direction:column; align-items:center; gap:7px; flex-shrink:0; min-width:80px;" onclick="toggleRail('bieding')">
+        <div class="rail-dot done pulse" title="Details">
+          <i class="fa-solid fa-check" style="font-size:12px;"></i>
+        </div>
+        <p style="font-size:11px; font-weight:700; color:#0d9488; text-align:center;">Bieding</p>
+        <p style="font-size:10px; color:#94a3b8; text-align:center; margin-top:-3px;">3 apr</p>
+      </div>
+
+      <div class="rail-seg" style="background:#14b8a6;"></div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; gap:7px; flex-shrink:0; min-width:100px;" onclick="toggleRail('koopakte')">
+        <div class="rail-dot done" title="Details">
+          <i class="fa-solid fa-check" style="font-size:12px;"></i>
+        </div>
+        <p style="font-size:11px; font-weight:700; color:#0d9488; text-align:center;">Koopovereenkomst</p>
+        <p style="font-size:10px; color:#94a3b8; text-align:center; margin-top:-3px;">7 apr</p>
+      </div>
+
+      <div class="rail-seg" style="background:linear-gradient(to right, #14b8a6 50%, #e2e8f0 50%);"></div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; gap:7px; flex-shrink:0; min-width:100px;" onclick="toggleRail('hypotheek')">
+        <div class="rail-dot active pulse" title="Details">
+          <i class="fa-solid fa-building-columns" style="font-size:13px;"></i>
+        </div>
+        <p style="font-size:11px; font-weight:700; color:#0d9488; text-align:center;">Hypotheek</p>
+        <p style="font-size:10px; color:#64748b; text-align:center; margin-top:-3px;">Bezig</p>
+      </div>
+
+      <div class="rail-seg" style="background:#e2e8f0;"></div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; gap:7px; flex-shrink:0; min-width:80px;" onclick="toggleRail('taxatie')">
+        <div class="rail-dot pending">
+          <i class="fa-solid fa-magnifying-glass" style="font-size:12px;"></i>
+        </div>
+        <p style="font-size:11px; font-weight:600; color:#94a3b8; text-align:center;">Taxatie</p>
+        <p style="font-size:10px; color:#cbd5e1; text-align:center; margin-top:-3px;">Mei</p>
+      </div>
+
+      <div class="rail-seg" style="background:#e2e8f0;"></div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; gap:7px; flex-shrink:0; min-width:80px;" onclick="toggleRail('overdracht')">
+        <div class="rail-dot pending">
+          <i class="fa-solid fa-key" style="font-size:12px;"></i>
+        </div>
+        <p style="font-size:11px; font-weight:600; color:#94a3b8; text-align:center;">Overdracht</p>
+        <p style="font-size:10px; color:#cbd5e1; text-align:center; margin-top:-3px;">28 jun</p>
+      </div>
+
+    </div>
+
+    <!-- Rail detail drawer -->
+    <div id="rail-detail">
+      <hr class="rule" style="margin:16px 0 14px;">
+      <div id="rail-detail-content" style="font-size:13px; color:#64748b; line-height:1.6;"></div>
+    </div>
+  </div>
+
+  <!-- INTRO -->
+  <p style="font-size:12px; color:#94a3b8; margin-bottom:20px; line-height:1.6;">
+    Elke stakeholder ziet dezelfde transactie — gefilterd op zijn rol, acties en verantwoordelijkheden.
+    Klik op een tab om te zien hoe het portaal eruitziet en hoe de gebruiker in dit scherm belandt.
+  </p>
+
+  <!-- TABS -->
+  <div style="display:flex; border-bottom:1px solid #e2e8f0; margin-bottom:0; overflow-x:auto; gap:0; background:#fff; border-radius:12px 12px 0 0;">
+    <button class="tab-btn active" id="tb-koper"   onclick="showTab('koper')"><span style="width:20px;height:20px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#0d9488;font-weight:800;flex-shrink:0;">K</span>Koper</button>
+    <button class="tab-btn"        id="tb-verkoper" onclick="showTab('verkoper')"><span style="width:20px;height:20px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#94a3b8;font-weight:800;flex-shrink:0;">V</span>Verkoper</button>
+    <button class="tab-btn"        id="tb-makelaar" onclick="showTab('makelaar')"><span style="width:20px;height:20px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#94a3b8;font-weight:800;flex-shrink:0;">M</span>Makelaar</button>
+    <button class="tab-btn"        id="tb-bank"     onclick="showTab('bank')"><span style="width:20px;height:20px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#94a3b8;font-weight:800;flex-shrink:0;">B</span>Bank</button>
+    <button class="tab-btn disabled" id="tb-notaris" title="Nog niet van toepassing — notaris wordt toegewezen na hypotheekakkoord"><span style="width:20px;height:20px;background:#f8fafc;border:1px solid #f1f5f9;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#cbd5e1;font-weight:800;flex-shrink:0;">N</span>Notaris <span style="font-size:10px;background:#f8fafc;color:#cbd5e1;border-radius:5px;padding:1px 6px;margin-left:2px;border:1px solid #e2e8f0;">later</span></button>
+  </div>
+
+  <!-- ===== KOPER ===== -->
+  <div id="panel-koper" class="tab-panel active" style="margin-top:0; background:#fff; border:1px solid #e2e8f0; border-top:none; border-radius:0 0 12px 12px; padding:20px; gap:16px;">
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div class="entry-chip">
+        <i class="fa-solid fa-arrow-right-to-bracket" style="font-size:10px;"></i>
+        Account → Mijn deal → Talmastraat 26
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+          <span class="badge badge-teal">Koper</span>
+          <span style="font-size:12px; color:#94a3b8; font-weight:500;">M. de Vries</span>
+        </div>
+        <div class="action-card">
+          <p style="font-size:10px; font-weight:700; color:#0d9488; text-transform:uppercase; letter-spacing:.07em; margin-bottom:6px;">Actie vereist</p>
+          <p style="font-size:14px; font-weight:800; color:#0f172a; line-height:1.35; margin-bottom:4px;">Kies een hypotheekaanbieding</p>
+          <p style="font-size:11px; color:#0d9488;">6 van 8 aanbiedingen ontvangen</p>
+        </div>
+        <p style="font-size:12px; color:#64748b; line-height:1.65;">
+          Je aanvraag is verstuurd naar 8 geldverstrekkers. Vergelijk de ontvangen aanbiedingen en bevestig je keuze met iDIN.
+        </p>
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:11px; color:#94a3b8; margin-bottom:7px;">
+            <span style="font-weight:600;">Hypotheekstap</span><span style="color:#0d9488;">3 / 4</span>
+          </div>
+          <div style="display:flex; gap:3px; margin-bottom:8px;">
+            <div style="flex:1; height:4px; background:#14b8a6; border-radius:3px;"></div>
+            <div style="flex:1; height:4px; background:#14b8a6; border-radius:3px;"></div>
+            <div style="flex:1; height:4px; background:#14b8a6; border-radius:3px; animation:pulse-ring 2s infinite;"></div>
+            <div style="flex:1; height:4px; background:#e2e8f0; border-radius:3px;"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:9px; color:#94a3b8;">
+            <span style="color:#0d9488;">Taxatievorm</span>
+            <span style="color:#0d9488;">Dossier</span>
+            <span style="color:#14b8a6; font-weight:700;">Aanbiedingen</span>
+            <span>Bevestigen</span>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="this.textContent='Geopend ✓'; this.style.background='#059669';">Ga naar hypotheekflow</button>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="metric"><div class="m-val" style="color:#0d9488;">€ 565.000</div><div class="m-lbl">Geaccepteerd bod</div></div>
+        <div class="metric"><div class="m-val">6 / 8</div><div class="m-lbl">Aanbiedingen ontvangen</div></div>
+        <div class="metric"><div class="m-val" style="color:#059669;">Verlopen</div><div class="m-lbl">Wettelijke bedenktijd</div></div>
+        <div class="metric"><div class="m-val">28 jun</div><div class="m-lbl">Transportdatum</div></div>
+      </div>
+      <div class="card" style="padding:18px;">
+        <p style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em; margin-bottom:12px;">Dossier volledigheid</p>
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:#94a3b8; margin-bottom:7px;">
+          <span>87% compleet</span><span style="color:#d97706;">1 stuk ontbreekt</span>
+        </div>
+        <div class="pbar-track" style="margin-bottom:14px;"><div class="pbar-fill" style="width:87%;"></div></div>
+        <div class="chk row-hover" onclick="this.querySelector('.chk-icon').className='chk-icon chk-done'; this.querySelector('small').textContent='iDIN geverifieerd';">
+          <div class="chk-icon chk-done"><i class="fa-solid fa-check"></i></div>
+          <div style="flex:1;"><p style="font-size:13px; font-weight:600; color:#334155;">BSN verificatie</p><small style="font-size:11px; color:#94a3b8;">iDIN geverifieerd</small></div>
+          <span class="badge badge-green">Klaar</span>
+        </div>
+        <div class="chk row-hover">
+          <div class="chk-icon chk-done"><i class="fa-solid fa-check"></i></div>
+          <div style="flex:1;"><p style="font-size:13px; font-weight:600; color:#334155;">Inkomensverklaring</p><small style="font-size:11px; color:#94a3b8;">Ockto — UWV jaaropgave</small></div>
+          <span class="badge badge-green">Klaar</span>
+        </div>
+        <div class="chk row-hover" onclick="this.querySelector('.chk-icon').className='chk-icon chk-done'; this.querySelector('.chk-icon').innerHTML='<i class=\'fa-solid fa-check\'></i>'; this.querySelector('small').textContent='Geüpload'; this.querySelector('.badge').className='badge badge-green'; this.querySelector('.badge').textContent='Klaar';">
+          <div class="chk-icon chk-warn"><i class="fa-solid fa-exclamation"></i></div>
+          <div style="flex:1;"><p style="font-size:13px; font-weight:600; color:#334155;">Werkgeversverklaring</p><small style="font-size:11px; color:#d97706;">Klik om te uploaden (demo)</small></div>
+          <span class="badge badge-amber">Vereist</span>
+        </div>
+        <div class="chk row-hover">
+          <div class="chk-icon chk-done"><i class="fa-solid fa-check"></i></div>
+          <div style="flex:1;"><p style="font-size:13px; font-weight:600; color:#334155;">BKR-verklaring</p><small style="font-size:11px; color:#94a3b8;">Geen negatieve registraties</small></div>
+          <span class="badge badge-green">Klaar</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:0;">
+      <p style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em; margin-bottom:16px;">Tijdlijn transactie</p>
+      <div class="tl done">
+        <div class="tl-dot tl-done"><i class="fa-solid fa-check"></i></div>
+        <div><p style="font-size:12px; font-weight:700; color:#334155;">Bod geaccepteerd</p><p style="font-size:10px; color:#94a3b8; margin-top:2px;">€ 565.000 · 3 april 2026</p></div>
+      </div>
+      <div class="tl done">
+        <div class="tl-dot tl-done"><i class="fa-solid fa-check"></i></div>
+        <div><p style="font-size:12px; font-weight:700; color:#334155;">Koopakte getekend</p><p style="font-size:10px; color:#94a3b8; margin-top:2px;">iDIN · 7 april 2026</p></div>
+      </div>
+      <div class="tl">
+        <div class="tl-dot tl-curr"><i class="fa-solid fa-building-columns" style="font-size:7px;"></i></div>
+        <div><p style="font-size:12px; font-weight:700; color:#0d9488;">Hypotheek <span style="font-size:9px; background:#f0fdfa; color:#0d9488; border-radius:4px; padding:1px 6px; margin-left:3px; border:1px solid #99f6e4;">Bezig</span></p><p style="font-size:10px; color:#64748b; margin-top:2px;">Aanbiedingen — dag 3</p></div>
+      </div>
+      <div class="tl">
+        <div class="tl-dot tl-pend" style="font-size:8px;font-weight:800;">4</div>
+        <div><p style="font-size:12px; font-weight:600; color:#94a3b8;">Taxatie</p><p style="font-size:10px; color:#cbd5e1; margin-top:2px;">AVM gepland · mei</p></div>
+      </div>
+      <div class="tl">
+        <div class="tl-dot tl-pend" style="font-size:8px;font-weight:800;">5</div>
+        <div><p style="font-size:12px; font-weight:600; color:#94a3b8;">Overdracht</p><p style="font-size:10px; color:#cbd5e1; margin-top:2px;">Van Dam & Partners · 28 jun</p></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== VERKOPER ===== -->
+  <div id="panel-verkoper" class="tab-panel" style="margin-top:0; background:#fff; border:1px solid #e2e8f0; border-top:none; border-radius:0 0 12px 12px; padding:20px; gap:16px;">
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div class="entry-chip"><i class="fa-solid fa-arrow-right-to-bracket" style="font-size:10px;"></i>Account → Mijn verkoop → Talmastraat 26</div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+        <span class="badge badge-teal">Verkoper</span>
+        <span style="font-size:12px; color:#94a3b8; font-weight:500;">J. Bakker</span>
+      </div>
+      <div class="action-card">
+        <p style="font-size:10px; font-weight:700; color:#0d9488; text-transform:uppercase; letter-spacing:.07em; margin-bottom:6px;">Wachten op</p>
+        <p style="font-size:14px; font-weight:800; color:#0f172a; line-height:1.35; margin-bottom:4px;">Waarborgsom verwacht 17 mei</p>
+        <p style="font-size:11px; color:#0d9488;">€ 56.500 · 10% koopsom via Nexum escrow</p>
+      </div>
+      <p style="font-size:12px; color:#64748b; line-height:1.65;">Koopakte is getekend. De koper regelt zijn hypotheek. Zodra het akkoord binnen is, vervallen de ontbindende voorwaarden automatisch.</p>
+      <div class="card-inset" style="padding:12px;">
+        <div style="display:flex; align-items:center; gap:7px; margin-bottom:5px;">
+          <div class="dot-amber"></div>
+          <p style="font-size:12px; color:#334155; font-weight:600;">Hypotheekstatus koper</p>
+        </div>
+        <p style="font-size:12px; color:#0d9488; font-weight:700;">Aanbiedingen vergelijken — dag 3 van 7</p>
+        <p style="font-size:10px; color:#94a3b8; margin-top:3px;">Verwacht akkoord: ca. 14 mei 2026</p>
+      </div>
+      <button class="btn-ghost" style="width:100%;" onclick="this.textContent='Notificatie ingesteld ✓';">
+        <i class="fa-solid fa-bell" style="margin-right:6px; font-size:11px;"></i>Notificatie bij akkoord
+      </button>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="metric"><div class="m-val" style="color:#0d9488;">€ 565.000</div><div class="m-lbl">Definitieve verkoopprijs</div></div>
+        <div class="metric"><div class="m-val" style="color:#059669;">Verlopen</div><div class="m-lbl">Wettelijke bedenktijd</div></div>
+        <div class="metric"><div class="m-val" style="color:#d97706;">17 mei</div><div class="m-lbl">Waarborgsom verwacht</div></div>
+        <div class="metric"><div class="m-val">28 jun</div><div class="m-lbl">Transportdatum</div></div>
+      </div>
+      <div class="card" style="padding:18px;">
+        <p style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em; margin-bottom:12px;">Transactiestatus</p>
+        <div class="chk row-hover"><div class="chk-icon chk-done"><i class="fa-solid fa-check"></i></div><div style="flex:1;"><p style="font-size:13px;font-weight:600;color:#334155;">Bod geaccepteerd</p><small style="font-size:11px;color:#94a3b8;">3 april — biedlogboek gesloten</small></div><span class="badge badge-green">Klaar</span></div>
+        <div class="chk row-hover"><div class="chk-icon chk-done"><i class="fa-solid fa-check"></i></div><div style="flex:1;"><p style="font-size:13px;font-weight:600;color:#334155;">Koopovereenkomst</p><small style="font-size:11px;color:#94a3b8;">Beide partijen · iDIN</small></div><span class="badge badge-green">Klaar</span></div>
+        <div class="chk row-hover"><div class="chk-icon chk-warn"><i class="fa-solid fa-clock"></i></div><div style="flex:1;"><p style="font-size:13px;font-weight:600;color:#334155;">Waarborgsom</p><small style="font-size:11px;color:#d97706;">€ 56.500 — verwacht 17 mei</small></div><span class="badge badge-amber">In behandeling</span></div>
+        <div class="chk row-hover"><div class="chk-icon chk-pend"><i class="fa-solid fa-circle" style="font-size:5px;"></i></div><div style="flex:1;"><p style="font-size:13px;font-weight:600;color:#94a3b8;">Hypotheekakkoord koper</p><small style="font-size:11px;color:#cbd5e1;">Ontbindende voorwaarden vervallen hierna</small></div><span class="badge badge-slate">Wachten</span></div>
+        <div class="chk row-hover"><div class="chk-icon chk-pend"><i class="fa-solid fa-circle" style="font-size:5px;"></i></div><div style="flex:1;"><p style="font-size:13px;font-weight:600;color:#94a3b8;">Transportakte</p><small style="font-size:11px;color:#cbd5e1;">Van Dam & Partners · 28 jun</small></div><span class="badge badge-slate">Gepland</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <p style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em;">Notaris & escrow</p>
+      <div class="card-inset" style="padding:14px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+          <div style="width:32px;height:32px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fa-solid fa-scale-balanced" style="color:#0d9488;font-size:13px;"></i></div>
+          <div><p style="font-size:12px;font-weight:700;color:#334155;">Van Dam & Partners</p><p style="font-size:10px;color:#94a3b8;">Notariskantoor · Amsterdam</p></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;border-top:1px solid #f1f5f9;padding-top:9px;">
+          <span style="color:#94a3b8;">Transportdatum</span><span style="color:#334155;font-weight:700;">28 juni 2026</span>
+        </div>
+      </div>
+      <div class="card-inset" style="padding:14px;">
+        <p style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Escrow — Nexum Finance</p>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><span style="color:#94a3b8;">Waarborgsom (10%)</span><span style="color:#d97706;font-weight:700;">€ 56.500</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><span style="color:#94a3b8;">Status</span><span style="color:#d97706;font-weight:600;">Verwacht 17 mei</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:#94a3b8;">Uitbetaling aan verkoper</span><span style="color:#334155;font-weight:600;">Bij overdracht</span></div>
+      </div>
+      <div class="action-card">
+        <p style="font-size:10px;color:#0d9488;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Digital Property Token</p>
+        <p style="font-size:11px;color:#64748b;line-height:1.5;">Token geregistreerd. Eigendomsoverdracht wordt automatisch vastgelegd bij aktepassering.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== MAKELAAR ===== -->
+  <div id="panel-makelaar" class="tab-panel" style="margin-top:0; background:#fff; border:1px solid #e2e8f0; border-top:none; border-radius:0 0 12px 12px; padding:20px; gap:16px;">
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div class="entry-chip"><i class="fa-solid fa-arrow-right-to-bracket" style="font-size:10px;"></i>Realtor portal → Deal-overzicht → Talmastraat 26</div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+        <span class="badge badge-teal">Makelaar</span>
+        <span style="font-size:12px; color:#94a3b8; font-weight:500;">Maasland Wonen</span>
+      </div>
+      <div class="action-card" style="border-color:#fde68a; background:#fffbeb;">
+        <p style="font-size:10px; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:.07em; margin-bottom:6px;">Actie vereist</p>
+        <p style="font-size:14px; font-weight:800; color:#0f172a; line-height:1.35; margin-bottom:4px;">Werkgeversverklaring koper ontbreekt</p>
+        <p style="font-size:11px; color:#d97706;">Stuur herinnering aan M. de Vries</p>
+      </div>
+      <p style="font-size:12px; color:#64748b; line-height:1.65;">Deal staat op dag 3 van de hypotheekfase. 1 document ontbreekt in het dossier van de koper.</p>
+      <div class="card-inset" style="padding:12px;">
+        <p style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Agent Accuracy Index</p>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:26px;font-weight:900;color:#0d9488;">94</span>
+          <div style="flex:1;"><div class="pbar-track"><div class="pbar-fill" style="width:94%;"></div></div><p style="font-size:9px;color:#94a3b8;margin-top:3px;">Nexum gecertificeerd partner</p></div>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="this.textContent='Herinnering verzonden ✓'; this.style.background='#059669';">
+        <i class="fa-solid fa-paper-plane" style="margin-right:6px; font-size:11px;"></i>Stuur herinnering
+      </button>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="metric"><div class="m-val" style="color:#0d9488;">€ 7.637</div><div class="m-lbl">Courtage (1,35% + btw)</div></div>
+        <div class="metric"><div class="m-val" style="color:#d97706;">87%</div><div class="m-lbl">Dossier volledigheid</div></div>
+        <div class="metric"><div class="m-val" style="color:#d97706;">Dag 3</div><div class="m-lbl">Hypotheekfase</div></div>
+        <div class="metric"><div class="m-val">28 jun</div><div class="m-lbl">Geplande overdracht</div></div>
+      </div>
+      <div class="card" style="padding:18px;">
+        <p style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em; margin-bottom:12px;">Beide partijen</p>
+        <div class="card-inset" style="padding:12px; margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <p style="font-size:12px;font-weight:700;color:#334155;">M. de Vries <span style="color:#94a3b8;font-weight:400;font-size:11px;">(koper)</span></p>
+            <span class="badge badge-amber">Hypotheek bezig</span>
+          </div>
+          <div class="chk" style="padding:4px 0;"><div class="chk-icon chk-done" style="width:16px;height:16px;"><i class="fa-solid fa-check" style="font-size:7px;"></i></div><span style="font-size:11px;color:#64748b;">iDIN geverifieerd</span></div>
+          <div class="chk" style="padding:4px 0;"><div class="chk-icon chk-done" style="width:16px;height:16px;"><i class="fa-solid fa-check" style="font-size:7px;"></i></div><span style="font-size:11px;color:#64748b;">Inkomen via Ockto</span></div>
+          <div class="chk" style="padding:4px 0;border:none;"><div class="chk-icon chk-warn" style="width:16px;height:16px;"><i class="fa-solid fa-exclamation" style="font-size:7px;"></i></div><span style="font-size:11px;color:#d97706;">Werkgeversverklaring ontbreekt</span></div>
+        </div>
+        <div class="card-inset" style="padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <p style="font-size:12px;font-weight:700;color:#334155;">J. Bakker <span style="color:#94a3b8;font-weight:400;font-size:11px;">(verkoper)</span></p>
+            <span class="badge badge-green">Compleet</span>
+          </div>
+          <div class="chk" style="padding:4px 0;"><div class="chk-icon chk-done" style="width:16px;height:16px;"><i class="fa-solid fa-check" style="font-size:7px;"></i></div><span style="font-size:11px;color:#64748b;">Identiteit bevestigd</span></div>
+          <div class="chk" style="padding:4px 0;border:none;"><div class="chk-icon chk-done" style="width:16px;height:16px;"><i class="fa-solid fa-check" style="font-size:7px;"></i></div><span style="font-size:11px;color:#64748b;">Koopovereenkomst getekend</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <p style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em;">Courtage & planning</p>
+      <div class="card-inset" style="padding:14px;">
+        <p style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Courtage-overzicht</p>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><span style="color:#94a3b8;">Koopsom</span><span style="color:#334155;font-weight:600;">€ 565.000</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><span style="color:#94a3b8;">Tarief</span><span style="color:#334155;font-weight:600;">1,35% incl. btw</span></div>
+        <hr class="rule" style="margin:8px 0;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;"><span style="color:#0d9488;">Te ontvangen</span><span style="color:#0d9488;">€ 7.637</span></div>
+        <p style="font-size:10px;color:#94a3b8;margin-top:6px;">Uitbetaling bij aktepassering · 28 juni 2026</p>
+      </div>
+      <div class="card-inset" style="padding:14px;">
+        <p style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Deadlines</p>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #f1f5f9;"><span style="color:#94a3b8;">Werkgeversverklaring koper</span><span style="color:#d97706;font-weight:700;">Vandaag</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #f1f5f9;"><span style="color:#94a3b8;">Waarborgsom ontvangst</span><span style="color:#334155;font-weight:600;">17 mei</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:#94a3b8;">Transportakte</span><span style="color:#334155;font-weight:600;">28 jun</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== BANK ===== -->
+  <div id="panel-bank" class="tab-panel" style="margin-top:0; background:#fff; border:1px solid #e2e8f0; border-top:none; border-radius:0 0 12px 12px; padding:20px; gap:16px;">
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div class="entry-chip"><i class="fa-solid fa-arrow-right-to-bracket" style="font-size:10px;"></i>Finance portal → Aanvragen → Zaak #2026-0847</div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+        <span class="badge badge-teal">Hypotheekverstrekker</span>
+        <span style="font-size:12px; color:#94a3b8; font-weight:500;">ING</span>
+      </div>
+      <div class="action-card">
+        <p style="font-size:10px; font-weight:700; color:#0d9488; text-transform:uppercase; letter-spacing:.07em; margin-bottom:6px;">Actie vereist</p>
+        <p style="font-size:14px; font-weight:800; color:#0f172a; line-height:1.35; margin-bottom:4px;">UWV-verificatie afronden</p>
+        <p style="font-size:11px; color:#0d9488;">BKR en BRP zijn geverifieerd — UWV lopend</p>
+      </div>
+      <p style="font-size:12px; color:#64748b; line-height:1.65;">Pre-validated KYC-dossier ontvangen via Nexum Finance. BSN, inkomen en BRP zijn bevestigd. UWV-check verloopt automatisch.</p>
+      <div class="card-inset" style="padding:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <p style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Renteaanbod</p>
+          <span class="badge badge-slate">30 dgn geldig</span>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:4px;">
+          <span style="font-size:26px;font-weight:900;color:#0d9488;">3,82%</span>
+          <span style="font-size:12px;color:#94a3b8;">p.j.</span>
+        </div>
+        <p style="font-size:10px;color:#94a3b8;">10 jaar vast · 30 jaar · € 2.240/mnd</p>
+      </div>
+      <div class="card-inset" style="padding:12px;">
+        <p style="font-size:10px;color:#94a3b8;font-weight:600;margin-bottom:5px;">Time-to-Yes</p>
+        <p style="font-size:22px;font-weight:900;color:#0d9488;">4 min 12 sec</p>
+        <p style="font-size:10px;color:#94a3b8;margin-top:2px;">Doel: &lt;5 minuten</p>
+      </div>
+      <button class="btn-primary" onclick="this.textContent='Akkoord verleend ✓'; this.style.background='#059669';">Akkoord verlenen</button>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+        <div class="metric"><div class="m-val">€ 424.000</div><div class="m-lbl">Gewenste hypotheek</div></div>
+        <div class="metric"><div class="m-val" style="color:#059669;">75%</div><div class="m-lbl">LTV (veilig)</div></div>
+        <div class="metric"><div class="m-val" style="color:#d97706;">4 dgn</div><div class="m-lbl">Beslissingstermijn</div></div>
+        <div class="metric"><div class="m-val" style="color:#059669;">100%</div><div class="m-lbl">KYC betrouwbaarheid</div></div>
+      </div>
+      <div class="card" style="padding:18px;">
+        <p style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em; margin-bottom:12px;">KYC-verificatie</p>
+        <div class="chk row-hover"><div class="chk-icon chk-done"><i class="fa-solid fa-check"></i></div><div style="flex:1;"><p style="font-size:13px;font-weight:600;color:#334155;">BKR-check</p><small style="font-size:11px;color:#94a3b8;">Geen negatieve registraties</small></div><span class="badge badge-green">Goedgekeurd</span></div>
+        <div class="chk row-hover"><div class="chk-icon chk-done"><i class="fa-solid fa-check"></i></div><div style="flex:1;"><p style="font-size:13px;font-weight:600;color:#334155;">BRP-verificatie</p><small style="font-size:11px;color:#94a3b8;">Adreshistorie bevestigd</small></div><span class="badge badge-green">Goedgekeurd</span></div>
+        <div class="chk row-hover"><div class="chk-icon chk-done"><i class="fa-solid fa-check"></i></div><div style="flex:1;"><p style="font-size:13px;font-weight:600;color:#334155;">iDIN identiteit</p><small style="font-size:11px;color:#94a3b8;">BSN geverifieerd</small></div><span class="badge badge-green">Goedgekeurd</span></div>
+        <div class="chk row-hover"><div class="chk-icon chk-warn"><i class="fa-solid fa-clock"></i></div><div style="flex:1;"><p style="font-size:13px;font-weight:600;color:#334155;">UWV-inkomensdossier</p><small style="font-size:11px;color:#d97706;">Verificatie lopend — max 24 uur</small></div><span class="badge badge-amber">Lopend</span></div>
+        <div class="chk row-hover"><div class="chk-icon chk-pend"><i class="fa-solid fa-circle" style="font-size:5px;"></i></div><div style="flex:1;"><p style="font-size:13px;font-weight:600;color:#94a3b8;">AVM-taxatierapport</p><small style="font-size:11px;color:#cbd5e1;">WOZ € 548.000 aangevraagd</small></div><span class="badge badge-slate">Aangevraagd</span></div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <p style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.07em;">Object & aanvrager</p>
+      <div class="card-inset" style="padding:14px;">
+        <p style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Object</p>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><span style="color:#94a3b8;">Adres</span><span style="color:#334155;font-weight:600;">Talmastraat 26, Weesp</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><span style="color:#94a3b8;">WOZ-waarde</span><span style="color:#334155;font-weight:600;">€ 548.000 (2025)</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><span style="color:#94a3b8;">Koopsom</span><span style="color:#334155;font-weight:600;">€ 565.000</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:#94a3b8;">LTV</span><span style="color:#059669;font-weight:700;">75% (veilig)</span></div>
+      </div>
+      <div class="card-inset" style="padding:14px;">
+        <p style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Aanvrager</p>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><span style="color:#94a3b8;">Naam</span><span style="color:#334155;font-weight:600;">M. de Vries</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><span style="color:#94a3b8;">Bruto jaarinkomen</span><span style="color:#334155;font-weight:600;">€ 78.400</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><span style="color:#94a3b8;">Dienstverband</span><span style="color:#334155;font-weight:600;">Vast (&gt;2 jaar)</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;"><span style="color:#94a3b8;">Eigen inbreng</span><span style="color:#059669;font-weight:700;">€ 141.000</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== NOTARIS (locked) ===== -->
+  <div id="panel-notaris" class="tab-panel" style="margin-top:0; background:#fff; border:1px solid #e2e8f0; border-top:none; border-radius:0 0 12px 12px; padding:20px;">
+    <div class="locked-panel" style="border:none; padding:48px 40px;">
+      <div style="width:48px;height:48px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+        <i class="fa-solid fa-lock" style="color:#cbd5e1;font-size:18px;"></i>
+      </div>
+      <p style="font-size:15px;font-weight:800;color:#94a3b8;margin-bottom:8px;">Notaris nog niet van toepassing</p>
+      <p style="font-size:13px;color:#94a3b8;max-width:420px;line-height:1.7;margin-bottom:20px;">
+        De notaris wordt pas ingeschakeld nadat de hypotheek is goedgekeurd en de hypotheekakte is opgesteld. Verwacht: ca. 21 mei 2026.
+      </p>
+      <div class="card-inset" style="padding:14px 20px; max-width:380px; text-align:left;">
+        <p style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Wanneer wordt de notaris betrokken?</p>
+        <div class="chk"><div class="chk-icon chk-pend"><i class="fa-solid fa-circle" style="font-size:5px;"></i></div><p style="font-size:12px;color:#94a3b8;">Hypotheekakkoord ontvangen <span style="color:#cbd5e1;">(ca. 14 mei)</span></p></div>
+        <div class="chk"><div class="chk-icon chk-pend"><i class="fa-solid fa-circle" style="font-size:5px;"></i></div><p style="font-size:12px;color:#94a3b8;">Hypotheekakte opgesteld <span style="color:#cbd5e1;">(ca. 21 mei)</span></p></div>
+        <div class="chk"><div class="chk-icon chk-act"><i class="fa-solid fa-check" style="font-size:8px;"></i></div><p style="font-size:12px;color:#0d9488;font-weight:600;">Notaris toegewezen → dealview actief</p></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const TABS = ['koper','verkoper','makelaar','bank','notaris'];
+
+function showTab(id) {
+  if (id === 'notaris') return;
+  TABS.forEach(t => {
+    const btn = document.getElementById('tb-'+t);
+    const panel = document.getElementById('panel-'+t);
+    btn.classList.toggle('active', t === id);
+    panel.classList.toggle('active', t === id);
+    // Update tab icon color
+    const icon = btn.querySelector('span');
+    if (icon) {
+      if (t === id) {
+        icon.style.background = '#f0fdfa';
+        icon.style.border = '1px solid #99f6e4';
+        icon.style.color = '#0d9488';
+      } else if (t !== 'notaris') {
+        icon.style.background = '#f8fafc';
+        icon.style.border = '1px solid #e2e8f0';
+        icon.style.color = '#94a3b8';
+      }
+    }
+  });
+  location.hash = id;
+}
+
+// Rail detail data
+const RAIL_DATA = {
+  bieding: {
+    icon: 'fa-check',
+    color: '#0d9488',
+    title: 'Bieding geaccepteerd — 3 april 2026',
+    body: 'Winnend bod: € 565.000 (M. de Vries). Biedlogboek definitief gesloten en blockchain-verankerd. Bedenktijd van 3 werkdagen verstreken op 8 april 2026.'
+  },
+  koopakte: {
+    icon: 'fa-file-signature',
+    color: '#0d9488',
+    title: 'Koopovereenkomst getekend — 7 april 2026',
+    body: 'Beide partijen hebben de koopakte ondertekend via iDIN. Ontbindende voorwaarden: hypotheekvoorbehoud tot 14 mei 2026. Zaak #2026-0847 aangemaakt in Nexum.'
+  },
+  hypotheek: {
+    icon: 'fa-building-columns',
+    color: '#14b8a6',
+    title: 'Hypotheekaanvraag — bezig (dag 3 van 7)',
+    body: 'Dossier verstuurd naar 8 geldverstrekkers. 6 van 8 aanbiedingen ontvangen. Koper vergelijkt aanbiedingen. KYC: BKR en BRP geverifieerd, UWV lopend.'
+  },
+  taxatie: {
+    icon: 'fa-magnifying-glass',
+    color: '#94a3b8',
+    title: 'Taxatie — gepland na hypotheekakkoord',
+    body: 'AVM-taxatie (gratis, <5 min) staat klaar als koper dit kiest. Fysieke taxatie ook mogelijk (€ 595). Aangevraagd zodra hypotheekverstrekker definitief akkoord verleent.'
+  },
+  overdracht: {
+    icon: 'fa-key',
+    color: '#94a3b8',
+    title: 'Overdracht — gepland 28 juni 2026',
+    body: 'De juridische eigendomsoverdracht vindt plaats bij de notaris. De transportdatum wordt definitief vastgesteld na hypotheekakkoord en het opstellen van de hypotheekakte. Bij passering wordt het Nexum Digital Property Token automatisch overgedragen aan de koper.'
+  }
+};
+
+let openRail = null;
+function toggleRail(stage) {
+  const detail = document.getElementById('rail-detail');
+  const content = document.getElementById('rail-detail-content');
+  const d = RAIL_DATA[stage];
+  if (openRail === stage) {
+    detail.classList.remove('open');
+    openRail = null;
+    return;
+  }
+  content.innerHTML = `<div style="display:flex;align-items:flex-start;gap:12px;">
+    <div style="width:28px;height:28px;border-radius:50%;background:#f0fdfa;border:1px solid #99f6e4;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <i class="fa-solid ${d.icon}" style="color:${d.color};font-size:11px;"></i>
+    </div>
+    <div>
+      <p style="font-size:13px;font-weight:700;color:#334155;margin-bottom:5px;">${d.title}</p>
+      <p style="font-size:12px;color:#64748b;line-height:1.6;">${d.body}</p>
+    </div>
+  </div>`;
+  detail.classList.add('open');
+  openRail = stage;
+}
+
+// Hash routing
+const hash = location.hash.replace('#','');
+if (TABS.includes(hash) && hash !== 'notaris') showTab(hash);
+</script>
+</body>
+</html>
