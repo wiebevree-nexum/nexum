@@ -505,7 +505,7 @@
                             </li>
                             <li class="stap-item" role="option" onclick="showBuyerStep(5)">
                                 <span class="stap-num">5</span>
-                                <span class="stap-label">Bank selecteren</span>
+                                <span class="stap-label">Hypotheek aanvragen</span>
                                 <span class="stap-arrow" aria-hidden="true">&#8250;</span>
                             </li>
                         </ul>
@@ -1138,59 +1138,9 @@
             </div>
 
             <!-- STAP 5: FINANCIERING & BANKKEUZE (8 BANKEN PREMIUM) -->
+            <!-- STAP 5: HYPOTHEEKFLOW -->
             <div id="koper-step-5" class="step-view">
-                <div class="max-w-6xl mx-auto py-10 px-4 sm:px-6">
-                    <div class="text-center mb-10">
-                        <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 text-green-600 rounded-full mb-4 border-4 border-white shadow-sm">
-                            <i class="fa-solid fa-trophy text-2xl"></i>
-                        </div>
-                        <h2 class="text-3xl font-extrabold text-slate-900 mb-2">Gefeliciteerd, uw bod is geaccepteerd.</h2>
-                        <p class="text-slate-600 max-w-2xl mx-auto">Bod van € 565.000 op <strong>Talmastraat 26, Weesp</strong> is goedgekeurd. Kies de bank waarmee u de hypotheek wilt afsluiten.</p>
-                    </div>
-
-                    <!-- Sort tabs -->
-                    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
-                        <h3 class="text-lg font-bold text-slate-900">Live bankenaanbod</h3>
-                        <div class="flex items-center gap-1 bg-slate-100 rounded-xl p-1">
-                            <button onclick="sortBanken('rente')" id="stab-rente" class="stab px-4 py-1.5 rounded-lg text-xs font-bold transition bg-white shadow text-slate-900">Beste rente</button>
-                            <button onclick="sortBanken('snel')" id="stab-snel" class="stab px-4 py-1.5 rounded-lg text-xs font-bold transition text-slate-500 hover:text-slate-800">Alle banken</button>
-                            <button onclick="sortBanken('nhg')" id="stab-nhg" class="stab px-4 py-1.5 rounded-lg text-xs font-bold transition text-slate-500 hover:text-slate-800">NHG</button>
-                            <button onclick="sortBanken('groen')" id="stab-groen" class="stab px-4 py-1.5 rounded-lg text-xs font-bold transition text-slate-500 hover:text-slate-800">Groen</button>
-                        </div>
-                    </div>
-
-                    <div id="banken-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-                        <!-- Banken worden via JS ingeladen -->
-                    </div>
-
-                    <!-- Geselecteerde bank samenvatting -->
-                    <div id="bank-summary" style="display:none" class="mb-8 bg-teal-50 border border-teal-200 rounded-2xl p-6 shadow-sm">
-                        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                            <div>
-                                <p class="text-xs font-bold text-teal-600 uppercase tracking-widest mb-1">Gekozen bank</p>
-                                <h4 id="bank-sum-naam" class="text-xl font-extrabold text-slate-900 mb-0.5">ING Bank</h4>
-                                <p id="bank-sum-details" class="text-sm text-slate-600">3,79% rente &mdash; 10 jaar vast &mdash; NHG mogelijk &mdash; maandlast ca. € 1.940 bruto</p>
-                            </div>
-                            <button onclick="switchMainView('account')" class="shrink-0 bg-teal-500 hover:bg-teal-400 text-white px-8 py-3.5 rounded-full font-bold shadow-md transition whitespace-nowrap">
-                                Hypotheek aanvragen <i class="fa-solid fa-arrow-right ml-1"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Adviseur -->
-                    <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
-                        <div class="flex items-start gap-4">
-                            <div class="w-11 h-11 bg-white rounded-full flex items-center justify-center text-indigo-600 shadow-sm text-lg shrink-0"><i class="fa-solid fa-user-tie"></i></div>
-                            <div>
-                                <h4 class="font-bold text-indigo-900 mb-0.5">Twijfelt u over de voorwaarden?</h4>
-                                <p class="text-sm text-indigo-800">Een onafhankelijke Nexum adviseur kijkt gratis met u mee voordat u definitief kiest.</p>
-                            </div>
-                        </div>
-                        <button class="shrink-0 px-7 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-500 transition text-sm whitespace-nowrap">
-                            <i class="fa-solid fa-phone mr-2"></i>Spreek adviseur
-                        </button>
-                    </div>
-                </div>
+                <!-- Populated by startHypotheekFlow(w) -->
             </div>
 
         </div>
@@ -2011,7 +1961,10 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
                 
                 if(stepNumber === 1 && map) setTimeout(() => map.invalidateSize(), 100);
-                if(stepNumber === 4) updateBidStatus(); // Check the bid status when opening step 4
+                if(stepNumber === 4) updateBidStatus();
+                if(stepNumber === 5 && !activeStep.querySelector('#hfs1')) {
+                    _renderHypotheekFlow(window.hfWoning || woningenData[0]);
+                }
             }
         }
 
@@ -3118,6 +3071,336 @@
             }
         }, { threshold: 0.15 }).observe(grid);
     }());
+
+    // ─────────────────────────────────────────────────────
+    // HYPOTHEEKFLOW — in-page, getriggerd na bod-acceptatie
+    // ─────────────────────────────────────────────────────
+    const HF_BANKS = [
+        {abbr:'ING',  color:'#FF6200', name:'ING',      rente:'3,82%', maandlast:'€ 2.240/mnd', periode:'10 jaar vast', looptijd:'30 jaar'},
+        {abbr:'Rabo', color:'#004C97', name:'Rabobank',  rente:'3,88%', maandlast:'€ 2.256/mnd', periode:'10 jaar vast', looptijd:'30 jaar'},
+        {abbr:'ABN',  color:'#007BC7', name:'ABN AMRO',  rente:'3,91%', maandlast:'€ 2.263/mnd', periode:'10 jaar vast', looptijd:'30 jaar'},
+        {abbr:'SNS',  color:'#E31E24', name:'SNS Bank',  rente:'4,01%', maandlast:'€ 2.290/mnd', periode:'10 jaar vast', looptijd:'30 jaar'},
+        {abbr:'Flo',  color:'#00B5AD', name:'Florius',   rente:'3,79%', maandlast:'€ 2.226/mnd', periode:'10 jaar vast', looptijd:'30 jaar'},
+        {abbr:'Aeg',  color:'#0070C0', name:'Aegon',     rente:'4,05%', maandlast:'€ 2.299/mnd', periode:'10 jaar vast', looptijd:'30 jaar'},
+    ];
+    let hfTax_ = 'avm';
+
+    function startHypotheekFlow(w) {
+        hfTax_ = 'avm';
+        window.hfWoning = w;
+        showBuyerStep(5);
+        _renderHypotheekFlow(w);
+    }
+
+    function _renderHypotheekFlow(w) {
+        const mv = berekenMarktwaarde(w);
+        const avm = mv.waarde;
+        const koopsom = w.prijs;
+        const eigenInleg = Math.round(koopsom * 0.15 / 1000) * 1000;
+        const hypotheek = koopsom - eigenInleg;
+        const ltv = (hypotheek / avm * 100).toFixed(1);
+        const fEur = n => '€ ' + n.toLocaleString('nl-NL');
+
+        document.getElementById('koper-step-5').innerHTML = `
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div class="flex items-start gap-3">
+              <i class="fa-solid fa-scale-balanced text-amber-500 mt-0.5 flex-shrink-0"></i>
+              <div>
+                <p class="text-sm font-extrabold text-amber-900">Wettelijke bedenktijd (art. 7:2 BW)</p>
+                <p class="text-sm text-amber-800">U kunt de koop ontbinden tot <strong>woensdag 7 mei 2026 om 23:59</strong> zonder opgaaf van reden.</p>
+              </div>
+            </div>
+            <span class="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-white border border-amber-200 px-3 py-1.5 rounded-full whitespace-nowrap flex-shrink-0">
+              <i class="fa-solid fa-clock"></i>Verloopt over 2 dagen 14 uur
+            </span>
+          </div>
+
+          <div class="flex gap-6 items-start">
+
+            <div class="w-52 flex-shrink-0 hidden lg:block">
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm sticky top-24">
+                <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide mb-4">Hypotheekaanvraag</p>
+                <div class="relative">
+                  <div class="absolute left-3 top-3 bottom-3 w-0.5" id="hf-line" style="background:linear-gradient(to bottom,#14b8a6 0%,#e2e8f0 0%)"></div>
+                  <div class="space-y-0">
+                    ${[['Taxatievorm','AVM of fysiek'],['Dossier','Overzicht & versturen'],['Aanbiedingen','Vergelijk en kies'],['Keuze bevestigen','iDIN ondertekening']].map(([t,s],i) => `
+                    <button onclick="hfStep(${i+1})" id="hf-sbtn${i+1}" class="w-full flex items-start gap-3 py-3 relative z-10 text-left${i===3?' opacity-40 cursor-default':''}">
+                      <div id="hf-d${i+1}" class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 z-10 text-[10px] font-bold${i===0?' text-white':' text-slate-400 bg-slate-200'}" style="${i===0?'background:#14b8a6;outline:2px solid #14b8a6;outline-offset:2px':''}"><span>${i===0?'1':i+1}</span></div>
+                      <div class="pt-0.5">
+                        <p id="hf-l${i+1}" class="text-xs font-bold${i===0?'':' text-slate-400'}" style="${i===0?'color:#14b8a6':''}">${t}</p>
+                        <p class="text-[10px] text-slate-300">${s}</p>
+                      </div>
+                    </button>`).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex-1 min-w-0">
+
+              <div id="hfs1" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <h2 class="text-2xl font-extrabold text-slate-900 mb-1">Kies uw taxatievorm</h2>
+                <p class="text-sm text-slate-500 mb-6">De taxatievorm bepaalt uw maximale hypotheek. Nexum heeft al een AVM-taxatie klaarstaan.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                  <div id="hf-tax-avm" onclick="hfSelectTax('avm')" class="rounded-2xl border-2 border-teal-400 p-5 cursor-pointer relative" style="background:#f0fdfa">
+                    <span class="absolute top-3 right-3 text-[10px] font-extrabold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full">Aanbevolen</span>
+                    <div class="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center mb-3"><i class="fa-solid fa-robot text-teal-600"></i></div>
+                    <p class="font-extrabold text-slate-900 mb-0.5">Online AVM-taxatie</p>
+                    <p class="text-xl font-extrabold text-teal-600 mb-3">Gratis <span class="text-sm font-normal text-slate-500">— al uitgevoerd</span></p>
+                    <ul class="space-y-1.5 text-sm text-slate-600 mb-4">
+                      <li class="flex items-center gap-2"><i class="fa-solid fa-check text-teal-500 text-xs"></i>Maximaal <strong>90% LTV</strong></li>
+                      <li class="flex items-center gap-2"><i class="fa-solid fa-check text-teal-500 text-xs"></i>Max. hypotheek: <strong>${fEur(Math.round(avm*0.9/1000)*1000)}</strong></li>
+                      <li class="flex items-center gap-2"><i class="fa-solid fa-check text-teal-500 text-xs"></i>Direct beschikbaar</li>
+                      <li class="flex items-center gap-2"><i class="fa-solid fa-check text-teal-500 text-xs"></i>NWWI Klasse A</li>
+                    </ul>
+                    <div id="hf-avm-btn" class="w-full py-2.5 rounded-xl text-center text-sm font-bold text-white" style="background:#14b8a6"><i class="fa-solid fa-check mr-2"></i>Geselecteerd</div>
+                  </div>
+                  <div id="hf-tax-fys" onclick="hfSelectTax('fysiek')" class="rounded-2xl border-2 border-slate-200 p-5 cursor-pointer bg-white">
+                    <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mb-3"><i class="fa-solid fa-person-walking text-slate-500"></i></div>
+                    <p class="font-extrabold text-slate-900 mb-0.5">Fysieke taxatie</p>
+                    <p class="text-xl font-extrabold text-slate-900 mb-3">€ 595 <span class="text-sm font-normal text-slate-500">incl. btw</span></p>
+                    <ul class="space-y-1.5 text-sm text-slate-600 mb-4">
+                      <li class="flex items-center gap-2"><i class="fa-solid fa-check text-slate-400 text-xs"></i>Maximaal <strong>100% LTV</strong></li>
+                      <li class="flex items-center gap-2"><i class="fa-solid fa-check text-slate-400 text-xs"></i>Max. hypotheek: <strong>${fEur(koopsom)}</strong></li>
+                      <li class="flex items-center gap-2"><i class="fa-solid fa-check text-slate-400 text-xs"></i>Doorlooptijd 5–7 werkdagen</li>
+                      <li class="flex items-center gap-2"><i class="fa-solid fa-check text-slate-400 text-xs"></i>NWWI gecertificeerde taxateur</li>
+                    </ul>
+                    <div id="hf-fys-btn" class="w-full py-2.5 rounded-xl text-center text-sm font-bold text-slate-600 border border-slate-200">Kies fysieke taxatie</div>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-400 bg-slate-50 rounded-xl p-3 mb-5"><i class="fa-solid fa-circle-info mr-2 text-slate-300"></i>Voor de meeste kopers met eigen inleg is de AVM-taxatie voldoende. Kies fysiek als u de volledige koopsom wilt financieren.</p>
+                <button onclick="hfStep(2)" class="w-full py-4 rounded-full font-bold text-white shadow-md text-sm" style="background:#14b8a6">Dossier samenstellen en versturen <i class="fa-solid fa-arrow-right ml-2"></i></button>
+              </div>
+
+              <div id="hfs2" class="hidden">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                  <div class="flex items-center gap-3 mb-1">
+                    <h2 class="text-2xl font-extrabold text-slate-900">Dossier verzonden</h2>
+                    <span class="text-xs font-extrabold bg-teal-100 text-teal-700 px-2.5 py-0.5 rounded-full">100% compleet</span>
+                  </div>
+                  <p class="text-sm text-slate-500 mb-6">Uw hypotheekdossier is samengesteld op basis van geverifieerde brondata en verzonden naar 8 hypotheekverstrekkers.</p>
+                  <div class="space-y-4">
+                    <div class="border border-slate-100 rounded-2xl overflow-hidden">
+                      <div class="bg-slate-50 px-4 py-2.5 flex items-center gap-2 border-b border-slate-100"><i class="fa-solid fa-house text-slate-400 text-xs"></i><p class="text-xs font-extrabold text-slate-500 uppercase tracking-wide">Object</p></div>
+                      <div class="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                        <div><p class="text-xs text-slate-400 mb-0.5">Adres</p><p class="font-bold text-slate-900">${w.straat} ${w.huisnummer}<br><span class="font-normal text-slate-500 text-xs">${w.postcode} ${w.stad}</span></p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">Woningtype</p><p class="font-bold text-slate-900 capitalize">${w.woningtype}</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">Bouwjaar</p><p class="font-bold text-slate-900">${w.bouwjaar}</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">Woonoppervlak</p><p class="font-bold text-slate-900">${w.woonoppervlak_m2} m²</p></div>
+                        ${w.perceeloppervlak_m2 > 0 ? `<div><p class="text-xs text-slate-400 mb-0.5">Perceel</p><p class="font-bold text-slate-900">${w.perceeloppervlak_m2} m²</p></div>` : ''}
+                        <div><p class="text-xs text-slate-400 mb-0.5">Energielabel</p><p class="font-bold text-slate-900">${w.energielabel}</p></div>
+                      </div>
+                    </div>
+                    <div class="border border-slate-100 rounded-2xl overflow-hidden">
+                      <div class="bg-slate-50 px-4 py-2.5 flex items-center gap-2 border-b border-slate-100"><i class="fa-solid fa-euro-sign text-slate-400 text-xs"></i><p class="text-xs font-extrabold text-slate-500 uppercase tracking-wide">Financieel overzicht</p></div>
+                      <div class="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                        <div><p class="text-xs text-slate-400 mb-0.5">Koopsom</p><p class="font-bold text-slate-900">${fEur(koopsom)}</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">AVM-waarde</p><p class="font-bold" style="color:#14b8a6">${fEur(avm)}</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">Eigen inleg</p><p class="font-bold text-slate-900">${fEur(eigenInleg)}</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">Hypotheek gevraagd</p><p class="font-bold text-slate-900">${fEur(hypotheek)}</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">LTV</p><p class="font-bold text-slate-900">${ltv}%</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">Taxatievorm</p><p id="hf-dos-tax" class="font-bold text-slate-900">AVM — 90%</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">Looptijd</p><p class="font-bold text-slate-900">30 jaar</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">Rentevaste periode</p><p class="font-bold text-slate-900">10 jaar</p></div>
+                      </div>
+                    </div>
+                    <div class="border border-slate-100 rounded-2xl overflow-hidden">
+                      <div class="bg-slate-50 px-4 py-2.5 flex items-center gap-2 border-b border-slate-100"><i class="fa-solid fa-user text-slate-400 text-xs"></i><p class="text-xs font-extrabold text-slate-500 uppercase tracking-wide">Kopersprofiel</p></div>
+                      <div class="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                        <div><p class="text-xs text-slate-400 mb-0.5">Naam</p><p class="font-bold text-slate-900">S. Vermeer</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">Arbeidsvorm</p><p class="font-bold text-slate-900">Loondienst</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">Inkomen (Ockto)</p><p class="font-bold text-emerald-600">€ 78.500 ✓</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">BKR</p><p class="font-bold text-emerald-600">Schoon ✓</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">Identiteit</p><p class="font-bold text-emerald-600">DigiD ✓</p></div>
+                        <div><p class="text-xs text-slate-400 mb-0.5">Vermogen</p><p class="font-bold text-slate-900">€ 112.000</p></div>
+                      </div>
+                    </div>
+                    <div class="border border-slate-100 rounded-2xl overflow-hidden">
+                      <div class="bg-slate-50 px-4 py-2.5 flex items-center gap-2 border-b border-slate-100"><i class="fa-solid fa-building-columns text-slate-400 text-xs"></i><p class="text-xs font-extrabold text-slate-500 uppercase tracking-wide">Verstrekkers aangeschreven</p></div>
+                      <div class="p-4 flex flex-wrap gap-2">
+                        ${HF_BANKS.map(b => `<div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white flex-shrink-0" style="background:${b.color}">${b.abbr}</div>`).join('')}
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white bg-slate-400">KNAB</div>
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#22c55e">Trio</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex gap-3 mt-6">
+                    <button onclick="hfStep(1)" class="px-5 py-3 rounded-full font-bold text-slate-500 text-sm border border-slate-200 hover:bg-slate-50 transition"><i class="fa-solid fa-arrow-left mr-2"></i>Terug</button>
+                    <button onclick="hfStep(3)" class="flex-1 py-3 rounded-full font-bold text-white text-sm shadow-md transition" style="background:#14b8a6">Bekijk aanbiedingen <i class="fa-solid fa-arrow-right ml-2"></i></button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="hfs3" class="hidden">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                  <h2 class="text-2xl font-extrabold text-slate-900 mb-1">Hypotheekaanbiedingen</h2>
+                  <p class="text-sm text-slate-500 mb-5">6 van 8 hypotheekverstrekkers hebben een aanbieding gedaan. Aanbiedingen zijn 14 dagen geldig.</p>
+                  <div id="hf-offers" class="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden mb-4"></div>
+                  <div class="bg-slate-50 border border-slate-100 rounded-xl p-3.5 text-sm text-slate-400 mb-5">
+                    <i class="fa-solid fa-clock mr-2"></i><strong class="text-slate-600">Knab en Triodos</strong> hebben nog niet gereageerd. U ontvangt een melding zodra een aanbieding binnenkomt.
+                  </div>
+                  <button onclick="hfStep(2)" class="px-5 py-3 rounded-full font-bold text-slate-500 text-sm border border-slate-200 hover:bg-slate-50 transition"><i class="fa-solid fa-arrow-left mr-2"></i>Terug naar dossier</button>
+                </div>
+              </div>
+
+              <div id="hfs4" class="hidden">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center">
+                  <div class="inline-flex w-14 h-14 rounded-full items-center justify-center mb-3" style="background:#f0fdfa">
+                    <i class="fa-solid fa-circle-check text-2xl" style="color:#14b8a6"></i>
+                  </div>
+                  <h2 class="text-2xl font-extrabold text-slate-900 mb-1">Aanbieding geselecteerd</h2>
+                  <p class="text-sm text-slate-500 mb-6">Bevestig via iDIN om de hypotheekaanvraag in gang te zetten.</p>
+                  <div id="hf-chosen" class="bg-slate-50 rounded-2xl p-5 mb-5 text-left max-w-sm mx-auto"></div>
+                  <button class="w-full max-w-sm py-4 rounded-full font-bold text-white text-sm shadow-md" style="background:#14b8a6"><i class="fa-solid fa-id-card mr-2"></i>Bevestigen via iDIN</button>
+                  <p class="text-xs text-slate-400 mt-3"><button onclick="hfStep(3)" class="underline hover:text-slate-600">Andere aanbieding kiezen</button></p>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="w-56 flex-shrink-0 hidden xl:block">
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm sticky top-24 text-sm">
+                <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide mb-3">Object</p>
+                <p class="font-extrabold text-slate-900">${w.straat} ${w.huisnummer}</p>
+                <p class="text-xs text-slate-500 mb-4">${w.postcode} ${w.stad}</p>
+                <div class="space-y-2">
+                  <div class="flex justify-between"><span class="text-slate-400 text-xs">Koopsom</span><span class="font-bold text-slate-900">${fEur(koopsom)}</span></div>
+                  <div class="flex justify-between"><span class="text-slate-400 text-xs">AVM-waarde</span><span class="font-bold" style="color:#14b8a6">${fEur(avm)}</span></div>
+                  <div class="flex justify-between"><span class="text-slate-400 text-xs">Hypotheek</span><span class="font-bold text-slate-900">${fEur(hypotheek)}</span></div>
+                  <div class="flex justify-between"><span class="text-slate-400 text-xs">Eigen inleg</span><span class="font-bold text-slate-900">${fEur(eigenInleg)}</span></div>
+                </div>
+                <div class="border-t border-slate-100 pt-3 mt-3">
+                  <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide mb-2">Koper</p>
+                  <div class="space-y-1.5 text-xs">
+                    <div class="flex justify-between"><span class="text-slate-400">Naam</span><span class="font-bold text-slate-900">S. Vermeer</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Inkomen</span><span class="font-bold text-emerald-600">€ 78.500 ✓</span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">BKR</span><span class="font-bold text-emerald-600">Schoon ✓</span></div>
+                  </div>
+                </div>
+                <div class="border-t border-slate-100 pt-3 mt-3">
+                  <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide mb-1.5">Taxatie</p>
+                  <span id="hf-tax-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">AVM — 90% LTV</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>`;
+
+        hfRenderOffers();
+        _hfUpdateSidebar(1);
+    }
+
+    function hfStep(n) {
+        [1,2,3,4].forEach(i => {
+            const el = document.getElementById('hfs' + i);
+            if (el) el.classList.add('hidden');
+        });
+        const t = document.getElementById('hfs' + n);
+        if (t) t.classList.remove('hidden');
+        _hfUpdateSidebar(n);
+        if (n === 3) hfRenderOffers();
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    function _hfUpdateSidebar(s) {
+        for (let i = 1; i <= 4; i++) {
+            const d = document.getElementById('hf-d' + i);
+            const l = document.getElementById('hf-l' + i);
+            const btn = document.getElementById('hf-sbtn' + i);
+            if (!d) continue;
+            if (i < s) {
+                d.style.cssText = 'background:#14b8a6;color:white;outline:none';
+                d.innerHTML = '<i class="fa-solid fa-check text-[8px]"></i>';
+                if (l) { l.style.color = '#64748b'; l.style.fontWeight = '600'; }
+            } else if (i === s) {
+                d.style.cssText = 'background:#14b8a6;color:white;outline:2px solid #14b8a6;outline-offset:2px';
+                d.innerHTML = '<span>' + i + '</span>';
+                if (l) { l.style.color = '#14b8a6'; l.style.fontWeight = '800'; }
+            } else {
+                d.style.cssText = 'background:#e2e8f0;color:#94a3b8;outline:none';
+                d.innerHTML = '<span>' + i + '</span>';
+                if (l) { l.style.color = '#94a3b8'; l.style.fontWeight = '600'; }
+            }
+            if (btn) { btn.style.opacity = (i === 4 && s < 4) ? '0.4' : '1'; btn.style.cursor = (i === 4 && s < 4) ? 'default' : 'pointer'; }
+        }
+        const pct = s === 1 ? '0%' : s === 2 ? '40%' : s === 3 ? '80%' : '100%';
+        const line = document.getElementById('hf-line');
+        if (line) line.style.background = 'linear-gradient(to bottom,#14b8a6 ' + pct + ',#e2e8f0 ' + pct + ')';
+    }
+
+    function hfSelectTax(t) {
+        const avmCard = document.getElementById('hf-tax-avm');
+        const fysCard = document.getElementById('hf-tax-fys');
+        const avmBtn  = document.getElementById('hf-avm-btn');
+        const fysBtn  = document.getElementById('hf-fys-btn');
+        const badge   = document.getElementById('hf-tax-badge');
+        const dosTax  = document.getElementById('hf-dos-tax');
+        if (t === 'avm') {
+            avmCard.style.borderColor = '#14b8a6'; avmCard.style.background = '#f0fdfa';
+            fysCard.style.borderColor = '#e2e8f0'; fysCard.style.background = 'white';
+            avmBtn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Geselecteerd';
+            avmBtn.style.cssText = 'background:#14b8a6;color:white';
+            fysBtn.innerHTML = 'Kies fysieke taxatie'; fysBtn.style.cssText = '';
+            if (badge) { badge.textContent = 'AVM — 90% LTV'; badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700'; }
+            if (dosTax) dosTax.textContent = 'AVM — 90%';
+        } else {
+            fysCard.style.borderColor = '#14b8a6'; fysCard.style.background = '#f0fdfa';
+            avmCard.style.borderColor = '#e2e8f0'; avmCard.style.background = 'white';
+            fysBtn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Geselecteerd';
+            fysBtn.style.cssText = 'background:#14b8a6;color:white';
+            avmBtn.innerHTML = 'Kies AVM-taxatie'; avmBtn.style.cssText = '';
+            if (badge) { badge.textContent = 'Fysiek — 100% LTV'; badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700'; }
+            if (dosTax) dosTax.textContent = 'Fysiek — 100%';
+        }
+        hfTax_ = t;
+    }
+
+    function hfRenderOffers() {
+        const container = document.getElementById('hf-offers');
+        if (!container) return;
+        const shuffled = [...HF_BANKS];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        container.innerHTML = shuffled.map(b => `
+            <div class="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xs font-black text-white flex-shrink-0" style="background:${b.color}">${b.abbr}</div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-extrabold text-slate-900">${b.name}</p>
+                    <p class="text-xs text-slate-400">${b.periode} · ${b.looptijd}</p>
+                    <button onclick="hfDownload('${b.name}')" class="mt-1 flex items-center gap-1 text-xs font-semibold text-teal-600 hover:text-teal-700 transition"><i class="fa-solid fa-file-arrow-down"></i>Voorwaarden downloaden</button>
+                </div>
+                <div class="text-right flex-shrink-0 mr-3">
+                    <p class="text-2xl font-extrabold text-slate-900">${b.rente}</p>
+                    <p class="text-xs text-slate-500">${b.maandlast}</p>
+                </div>
+                <button onclick='hfChoose(${JSON.stringify(b)})' class="px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 text-slate-700 hover:border-teal-400 transition flex-shrink-0">Kies</button>
+            </div>`).join('');
+    }
+
+    function hfChoose(b) {
+        const chosen = document.getElementById('hf-chosen');
+        if (chosen) chosen.innerHTML = `
+            <p class="text-xs font-extrabold text-slate-400 uppercase tracking-wide mb-3">Gekozen aanbieding</p>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black text-white" style="background:${b.color}">${b.abbr}</div>
+                <div><p class="font-extrabold text-slate-900">${b.name}</p><p class="text-xs text-slate-400">${b.periode} · ${b.looptijd}</p></div>
+            </div>
+            <div class="space-y-2 text-sm mb-4">
+                <div class="flex justify-between bg-white rounded-lg px-3 py-2 border border-slate-100"><span class="text-slate-500">Rente</span><span class="font-extrabold text-slate-900">${b.rente}</span></div>
+                <div class="flex justify-between bg-white rounded-lg px-3 py-2 border border-slate-100"><span class="text-slate-500">Maandlast</span><span class="font-bold text-slate-900">${b.maandlast}</span></div>
+            </div>
+            <button onclick="hfDownload('${b.name}')" class="w-full py-2.5 rounded-xl text-sm font-bold border border-teal-200 text-teal-600 hover:bg-teal-50 transition"><i class="fa-solid fa-file-arrow-down mr-2"></i>Voorwaarden downloaden</button>`;
+        hfStep(4);
+    }
+
+    function hfDownload(bankName) {
+        alert('Hypotheekvoorwaarden ' + bankName + '\n\nIn de live versie wordt hier het PDF-document gedownload.\n\nBestandsnaam: Hypotheekvoorwaarden_' + bankName.replace(/\s+/g,'_') + '_2026.pdf');
+    }
     </script>
 
     <!-- ═══════════════════════════════════════════════ -->

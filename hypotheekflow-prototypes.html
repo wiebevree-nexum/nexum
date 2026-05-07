@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hypotheekflow — Prototypes A / B / C</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+    .teal { color: #14b8a6; }
+    .bg-teal { background: #14b8a6; }
+    .border-teal { border-color: #14b8a6; }
+    .bg-teal-light { background: #f0fdfa; }
+    .border-teal-light { border-color: #99f6e4; }
+    .animate-pulse-dot { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .step-connector { flex: 1; height: 2px; background: #e2e8f0; margin: 0 8px; }
+    .step-connector.done { background: #14b8a6; }
+    .tab-btn { transition: all .15s; }
+    .offer-row:hover { background: #f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+<!-- ==================== STICKY HEADER ==================== -->
+<div class="bg-white border-b border-slate-200 sticky top-0 z-50" style="box-shadow:0 1px 8px rgba(0,0,0,.06)">
+  <div class="max-w-screen-xl mx-auto px-6 py-3 flex items-center justify-between flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+      <span class="text-xl font-black text-slate-900">Brickq<span style="color:#14b8a6">.</span></span>
+      <span class="text-slate-300 hidden sm:block">|</span>
+      <span class="text-sm text-slate-400 hidden sm:block">Hypotheekflow prototype vergelijker</span>
+    </div>
+    <div class="flex gap-1 bg-slate-100 rounded-xl p-1">
+      <button onclick="switchOpt('a')" id="tab-a" class="tab-btn px-4 py-2 rounded-lg text-sm font-bold bg-white text-slate-900" style="box-shadow:0 1px 3px rgba(0,0,0,.1)">
+        <span class="hidden sm:inline">Optie </span>A — Wizard
+      </button>
+      <button onclick="switchOpt('b')" id="tab-b" class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-slate-500 hover:text-slate-700">
+        <span class="hidden sm:inline">Optie </span>B — Dossier
+      </button>
+      <button onclick="switchOpt('c')" id="tab-c" class="tab-btn px-4 py-2 rounded-lg text-sm font-bold text-slate-500 hover:text-slate-700">
+        <span class="hidden sm:inline">Optie </span>C — Dashboard
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Context bar -->
+<div style="background:#f0fdfa;border-bottom:1px solid #99f6e4">
+  <div class="max-w-screen-xl mx-auto px-6 py-2.5 flex items-center gap-3 flex-wrap text-sm" style="color:#0f766e">
+    <i class="fa-solid fa-handshake" style="color:#14b8a6"></i>
+    <span>Bod <strong>geaccepteerd</strong> — Talmastraat 26, Weesp</span>
+    <span style="color:#ccfbf1">·</span>
+    <span>Koopsom <strong>€ 565.000 k.k.</strong></span>
+    <span style="color:#ccfbf1">·</span>
+    <span>Hypotheek <strong>€ 480.000</strong></span>
+    <span style="color:#ccfbf1">·</span>
+    <span class="italic text-teal-600 opacity-70">Dit is wat de koper ziet na bod-acceptatie</span>
+  </div>
+</div>
+
+
+<!-- ====================================================== -->
+<!-- OPTIE A — WIZARD                                        -->
+<!-- ====================================================== -->
+<div id="opt-a">
+
+  <!-- Stepper -->
+  <div class="bg-white border-b border-slate-100">
+    <div class="max-w-2xl mx-auto px-6 py-5">
+      <div class="flex items-center">
+        <button onclick="wStep(1)" class="flex items-center gap-2 cursor-pointer group flex-shrink-0">
+          <div id="d1" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:#14b8a6"><i class="fa-solid fa-check text-xs"></i></div>
+          <span id="l1" class="text-xs font-semibold hidden md:block" style="color:#14b8a6">Bedenktijd</span>
+        </button>
+        <div id="c12" class="step-connector done"></div>
+        <button onclick="wStep(2)" class="flex items-center gap-2 cursor-pointer group flex-shrink-0">
+          <div id="d2" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:#14b8a6"><i class="fa-solid fa-check text-xs"></i></div>
+          <span id="l2" class="text-xs font-semibold hidden md:block" style="color:#14b8a6">Taxatievorm</span>
+        </button>
+        <div id="c23" class="step-connector done"></div>
+        <button onclick="wStep(3)" class="flex items-center gap-2 cursor-pointer group flex-shrink-0">
+          <div id="d3" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:#14b8a6"><i class="fa-solid fa-check text-xs"></i></div>
+          <span id="l3" class="text-xs font-semibold hidden md:block" style="color:#14b8a6">Dossier verzonden</span>
+        </button>
+        <div id="c34" class="step-connector done"></div>
+        <button onclick="wStep(4)" class="flex items-center gap-2 cursor-pointer group flex-shrink-0">
+          <div id="d4" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:#14b8a6">4</div>
+          <span id="l4" class="text-xs font-bold hidden md:block" style="color:#14b8a6">Aanbiedingen</span>
+        </button>
+        <div class="step-connector"></div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-slate-100 text-slate-400">5</div>
+          <span class="text-xs font-medium text-slate-400 hidden md:block">Keuze maken</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wizard body -->
+  <div class="max-w-2xl mx-auto px-4 py-8">
+
+    <!-- SCREEN 1: Bedenktijd -->
+    <div id="ws1" class="hidden">
+      <div class="text-center mb-8">
+        <div class="inline-flex w-16 h-16 rounded-full items-center justify-center mb-4" style="background:#f0fdfa">
+          <i class="fa-solid fa-handshake text-2xl" style="color:#14b8a6"></i>
+        </div>
+        <h2 class="text-3xl font-extrabold text-slate-900 mb-2">Gefeliciteerd — bod geaccepteerd!</h2>
+        <p class="text-slate-500">Voordat we verdergaan geldt de wettelijke bedenktijd van 3 dagen.</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 mb-4 shadow-sm">
+        <div class="flex items-start gap-4 mb-6">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fef9c3">
+            <i class="fa-solid fa-scale-balanced text-xl" style="color:#ca8a04"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-slate-900 text-lg mb-1">Wettelijke bedenktijd — 3 dagen</h3>
+            <p class="text-sm text-slate-500 leading-relaxed">Op basis van artikel 7:2 BW heeft u als koper recht op 3 dagen bedenktijd na het tekenen van de koopovereenkomst. U kunt de koop zonder opgaaf van reden ontbinden.</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3 mb-5">
+          <div class="rounded-xl p-4 text-center border-2" style="border-color:#14b8a6;background:#f0fdfa">
+            <p class="text-[10px] font-extrabold uppercase tracking-wide mb-1" style="color:#14b8a6">Dag 1 — Vandaag</p>
+            <p class="text-lg font-extrabold text-slate-900">Ma 5 mei</p>
+          </div>
+          <div class="rounded-xl p-4 text-center border border-slate-200 bg-slate-50">
+            <p class="text-[10px] font-extrabold uppercase tracking-wide text-slate-400 mb-1">Dag 2</p>
+            <p class="text-lg font-extrabold text-slate-900">Di 6 mei</p>
+          </div>
+          <div class="rounded-xl p-4 text-center border border-slate-200 bg-slate-50">
+            <p class="text-[10px] font-extrabold uppercase tracking-wide text-slate-400 mb-1">Dag 3 — Laatste</p>
+            <p class="text-lg font-extrabold text-slate-900">Wo 7 mei</p>
+          </div>
+        </div>
+        <div class="rounded-xl p-4 text-sm" style="background:#fef9c3;border:1px solid #fde68a;color:#92400e">
+          <i class="fa-solid fa-triangle-exclamation mr-2" style="color:#d97706"></i>
+          Bedenktijd verloopt op <strong>woensdag 7 mei 2026 om 23:59</strong>. U ontvangt 24 uur van tevoren een herinnering.
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 mb-5 shadow-sm">
+        <h4 class="font-bold text-slate-900 mb-3 text-sm">Wat kunt u nu al voorbereiden?</h4>
+        <div class="space-y-2.5">
+          <div class="flex items-center gap-3 text-sm"><div class="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style="background:#14b8a6"><i class="fa-solid fa-check text-white text-[9px]"></i></div><span class="text-slate-700">Taxatievorm kiezen (AVM of fysiek)</span></div>
+          <div class="flex items-center gap-3 text-sm"><div class="w-5 h-5 rounded-full border border-slate-200 bg-slate-50 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-lock text-slate-300 text-[9px]"></i></div><span class="text-slate-400">Hypotheekaanvragen versturen — beschikbaar na bedenktijd</span></div>
+          <div class="flex items-center gap-3 text-sm"><div class="w-5 h-5 rounded-full border border-slate-200 bg-slate-50 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-lock text-slate-300 text-[9px]"></i></div><span class="text-slate-400">Hypotheek kiezen — beschikbaar na bedenktijd</span></div>
+        </div>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="wStep(2)" class="flex-1 py-4 rounded-xl font-bold text-white text-sm shadow-md" style="background:#14b8a6">Taxatievorm alvast kiezen <i class="fa-solid fa-arrow-right ml-2"></i></button>
+        <button class="px-5 py-4 rounded-xl font-bold text-slate-500 text-sm border border-slate-200 bg-white hover:bg-slate-50">Koop ontbinden</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 2: Taxatiekeuze -->
+    <div id="ws2" class="hidden">
+      <div class="mb-7">
+        <h2 class="text-3xl font-extrabold text-slate-900 mb-2">Kies uw taxatievorm</h2>
+        <p class="text-slate-500">De taxatievorm bepaalt uw maximale hypotheek. Nexum heeft al een AVM-taxatie voor u klaarstaan.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
+        <!-- AVM -->
+        <div onclick="selectTax('avm')" id="tax-avm" class="bg-white rounded-2xl border-2 p-6 cursor-pointer shadow-sm relative" style="border-color:#14b8a6">
+          <div class="absolute top-4 right-4 text-[10px] font-extrabold px-2 py-0.5 rounded-full" style="background:#f0fdfa;color:#14b8a6;border:1px solid #99f6e4">Aanbevolen</div>
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style="background:#f0fdfa">
+            <i class="fa-solid fa-robot text-xl" style="color:#14b8a6"></i>
+          </div>
+          <h3 class="font-extrabold text-slate-900 text-lg mb-1">Online AVM-taxatie</h3>
+          <p class="text-2xl font-extrabold mb-4" style="color:#14b8a6">Gratis <span class="text-sm font-normal text-slate-400">— al uitgevoerd</span></p>
+          <div class="space-y-2 text-sm mb-5">
+            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-xs" style="color:#14b8a6"></i><span class="text-slate-600">Maximaal <strong>90% LTV</strong></span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-xs" style="color:#14b8a6"></i><span class="text-slate-600">Max. hypotheek: <strong>€ 495.000</strong></span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-xs" style="color:#14b8a6"></i><span class="text-slate-600">Direct beschikbaar</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-xs" style="color:#14b8a6"></i><span class="text-slate-600">NWWI Klasse A gecertificeerd</span></div>
+          </div>
+          <div class="w-full py-3 rounded-xl text-center text-sm font-bold text-white" style="background:#14b8a6"><i class="fa-solid fa-check mr-2"></i>Geselecteerd</div>
+        </div>
+        <!-- Fysiek -->
+        <div onclick="selectTax('fysiek')" id="tax-fysiek" class="bg-white rounded-2xl border-2 border-slate-200 p-6 cursor-pointer shadow-sm">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-slate-50">
+            <i class="fa-solid fa-person-digging text-xl text-slate-400"></i>
+          </div>
+          <h3 class="font-extrabold text-slate-900 text-lg mb-1">Fysieke taxatie</h3>
+          <p class="text-2xl font-extrabold text-slate-900 mb-4">€ 595 <span class="text-sm font-normal text-slate-400">incl. btw</span></p>
+          <div class="space-y-2 text-sm mb-5">
+            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-xs text-slate-300"></i><span class="text-slate-600">Maximaal <strong>100% LTV</strong></span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-xs text-slate-300"></i><span class="text-slate-600">Max. hypotheek: <strong>€ 565.000</strong></span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-xs text-slate-300"></i><span class="text-slate-600">Doorlooptijd 5–7 werkdagen</span></div>
+            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-xs text-slate-300"></i><span class="text-slate-600">NWWI gecertificeerde taxateur</span></div>
+          </div>
+          <div class="w-full py-3 rounded-xl text-center text-sm font-bold text-slate-700 border border-slate-200 bg-slate-50">Kies fysieke taxatie</div>
+        </div>
+      </div>
+      <div class="bg-slate-50 rounded-xl border border-slate-200 p-4 text-sm text-slate-500 mb-6">
+        <i class="fa-solid fa-circle-info text-slate-400 mr-2"></i>
+        Voor kopers met eigen inleg is de AVM-taxatie doorgaans voldoende. Kies fysiek als u de volledige koopsom wil financieren.
+      </div>
+      <div class="flex gap-3">
+        <button onclick="wStep(1)" class="px-6 py-4 rounded-xl font-bold text-slate-500 text-sm border border-slate-200 bg-white hover:bg-slate-50"><i class="fa-solid fa-arrow-left mr-2"></i>Terug</button>
+        <button onclick="wStep(3)" class="flex-1 py-4 rounded-xl font-bold text-white text-sm shadow-md" style="background:#14b8a6">Dossier versturen naar banken <i class="fa-solid fa-arrow-right ml-2"></i></button>
+      </div>
+    </div>
+
+    <!-- SCREEN 3: Dossier verzonden -->
+    <div id="ws3" class="hidden">
+      <div class="text-center mb-7">
+        <div class="inline-flex w-16 h-16 rounded-full items-center justify-center mb-4" style="background:#f0fdfa">
+          <i class="fa-solid fa-paper-plane text-2xl" style="color:#14b8a6"></i>
+        </div>
+        <h2 class="text-3xl font-extrabold text-slate-900 mb-2">Dossier verzonden</h2>
+        <p class="text-slate-500">Uw hypotheekdossier is verstuurd naar 8 hypotheekverstrekkers.</p>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 mb-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-slate-900">Dossierinhoud</h3>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#f0fdfa;color:#14b8a6;border:1px solid #99f6e4">100% compleet</span>
+        </div>
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between py-2 border-b border-slate-100 text-sm"><span class="text-slate-500 flex items-center gap-2"><i class="fa-solid fa-building-columns text-slate-300 w-4"></i>DigiD-verificatie</span><span class="font-bold text-emerald-600"><i class="fa-solid fa-check mr-1 text-xs"></i>Geverifieerd</span></div>
+          <div class="flex items-center justify-between py-2 border-b border-slate-100 text-sm"><span class="text-slate-500 flex items-center gap-2"><i class="fa-solid fa-file-invoice-dollar text-slate-300 w-4"></i>Inkomen (Ockto)</span><span class="font-bold text-emerald-600"><i class="fa-solid fa-check mr-1 text-xs"></i>€ 78.500/jr</span></div>
+          <div class="flex items-center justify-between py-2 border-b border-slate-100 text-sm"><span class="text-slate-500 flex items-center gap-2"><i class="fa-solid fa-house text-slate-300 w-4"></i>Object AVM</span><span class="font-bold text-emerald-600"><i class="fa-solid fa-check mr-1 text-xs"></i>€ 550.000</span></div>
+          <div class="flex items-center justify-between py-2 text-sm"><span class="text-slate-500 flex items-center gap-2"><i class="fa-solid fa-shield text-slate-300 w-4"></i>BKR-check</span><span class="font-bold text-emerald-600"><i class="fa-solid fa-check mr-1 text-xs"></i>Schoon</span></div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 mb-6 shadow-sm">
+        <h3 class="font-bold text-slate-900 mb-4">Verzonden naar <span style="color:#14b8a6">8 hypotheekverstrekkers</span></h3>
+        <div class="grid grid-cols-4 gap-3">
+          <div class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-slate-50"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#00B5AD">Flo</div><span class="text-[10px] text-slate-400">Wacht...</span></div>
+          <div class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-slate-50"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#FF6200">ING</div><span class="text-[10px] text-slate-400">Wacht...</span></div>
+          <div class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-slate-50"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#004C97">Rabo</div><span class="text-[10px] text-slate-400">Wacht...</span></div>
+          <div class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-slate-50"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#007BC7">ABN</div><span class="text-[10px] text-slate-400">Wacht...</span></div>
+          <div class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-slate-50"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#E31E24">SNS</div><span class="text-[10px] text-slate-400">Wacht...</span></div>
+          <div class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-slate-50"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#0070C0">Aeg</div><span class="text-[10px] text-slate-400">Wacht...</span></div>
+          <div class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-slate-50"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#6366f1">KNAB</div><span class="text-[10px] text-slate-400">Wacht...</span></div>
+          <div class="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-slate-50"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#22c55e">Trio</div><span class="text-[10px] text-slate-400">Wacht...</span></div>
+        </div>
+      </div>
+      <button onclick="wStep(4)" class="w-full py-4 rounded-xl font-bold text-white text-sm shadow-md" style="background:#14b8a6">Bekijk binnengekomen aanbiedingen <i class="fa-solid fa-arrow-right ml-2"></i></button>
+    </div>
+
+    <!-- SCREEN 4: Aanbiedingen -->
+    <div id="ws4">
+      <div class="flex items-start justify-between mb-6 flex-wrap gap-4">
+        <div>
+          <h2 class="text-3xl font-extrabold text-slate-900 mb-1">Hypotheekaanbiedingen</h2>
+          <p class="text-slate-500">6 van 8 banken hebben een bod uitgebracht. Vergelijk en kies.</p>
+        </div>
+        <div class="flex gap-1.5">
+          <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white">Laagste rente</button>
+          <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50">Maandlast</button>
+          <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50">Snelste</button>
+        </div>
+      </div>
+
+      <!-- Best offer -->
+      <div class="rounded-2xl border-2 p-5 mb-4 relative" style="border-color:#14b8a6;background:#f0fdfa">
+        <div class="absolute top-4 right-4 text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white" style="background:#14b8a6">Laagste rente</div>
+        <div class="flex items-center gap-4 flex-wrap mb-3">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0" style="background:#00B5AD">Flo</div>
+          <div class="flex-1">
+            <p class="font-extrabold text-slate-900 text-lg">Florius</p>
+            <p class="text-sm text-slate-500">10 jaar vast · 30 jaar looptijd</p>
+          </div>
+          <div class="text-right">
+            <p class="text-4xl font-extrabold" style="color:#14b8a6">3,79%</p>
+            <p class="text-sm text-slate-500">€ 2.226/mnd</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap mb-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Groen hypotheek</span>
+          <span class="text-xs text-slate-400"><i class="fa-solid fa-bolt mr-1"></i>Reactie: 3 minuten</span>
+        </div>
+        <button class="w-full py-3.5 rounded-xl font-bold text-white text-sm shadow-md" style="background:#14b8a6">Kies Florius — 3,79% <i class="fa-solid fa-arrow-right ml-2"></i></button>
+      </div>
+
+      <!-- Other 4 in grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm cursor-pointer hover:border-slate-300 transition-all">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#FF6200">ING</div><div><p class="font-bold text-slate-900">ING</p><p class="text-xs text-slate-400">10 jaar vast</p></div></div>
+            <div class="text-right"><p class="text-2xl font-extrabold text-slate-900">3,82%</p><p class="text-xs text-slate-500">€ 2.240/mnd</p></div>
+          </div>
+          <p class="text-xs text-slate-400 mb-3"><i class="fa-solid fa-bolt mr-1"></i>Reactie: 8 min</p>
+          <button class="w-full py-2.5 rounded-xl font-bold text-sm border-2 transition-all" style="border-color:#14b8a6;color:#14b8a6" onmouseover="this.style.background='#14b8a6';this.style.color='white'" onmouseout="this.style.background='transparent';this.style.color='#14b8a6'">Kies ING</button>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm cursor-pointer hover:border-slate-300 transition-all">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#004C97">Rabo</div><div><p class="font-bold text-slate-900">Rabobank</p><p class="text-xs text-slate-400">10 jaar vast</p></div></div>
+            <div class="text-right"><p class="text-2xl font-extrabold text-slate-900">3,88%</p><p class="text-xs text-slate-500">€ 2.256/mnd</p></div>
+          </div>
+          <div class="flex items-center gap-2 mb-3"><span class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Klimaathypotheek</span></div>
+          <button class="w-full py-2.5 rounded-xl font-bold text-sm border-2 transition-all" style="border-color:#14b8a6;color:#14b8a6" onmouseover="this.style.background='#14b8a6';this.style.color='white'" onmouseout="this.style.background='transparent';this.style.color='#14b8a6'">Kies Rabobank</button>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm cursor-pointer hover:border-slate-300 transition-all">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#007BC7">ABN</div><div><p class="font-bold text-slate-900">ABN AMRO</p><p class="text-xs text-slate-400">10 jaar vast</p></div></div>
+            <div class="text-right"><p class="text-2xl font-extrabold text-slate-900">3,91%</p><p class="text-xs text-slate-500">€ 2.263/mnd</p></div>
+          </div>
+          <p class="text-xs text-slate-400 mb-3"><i class="fa-solid fa-bolt mr-1"></i>Reactie: 12 min</p>
+          <button class="w-full py-2.5 rounded-xl font-bold text-sm border-2 transition-all" style="border-color:#14b8a6;color:#14b8a6" onmouseover="this.style.background='#14b8a6';this.style.color='white'" onmouseout="this.style.background='transparent';this.style.color='#14b8a6'">Kies ABN AMRO</button>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm cursor-pointer hover:border-slate-300 transition-all">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#E31E24">SNS</div><div><p class="font-bold text-slate-900">SNS Bank</p><p class="text-xs text-slate-400">10 jaar vast</p></div></div>
+            <div class="text-right"><p class="text-2xl font-extrabold text-slate-900">4,01%</p><p class="text-xs text-slate-500">€ 2.290/mnd</p></div>
+          </div>
+          <p class="text-xs text-slate-400 mb-3"><i class="fa-solid fa-bolt mr-1"></i>Reactie: 6 min</p>
+          <button class="w-full py-2.5 rounded-xl font-bold text-sm border-2 transition-all" style="border-color:#14b8a6;color:#14b8a6" onmouseover="this.style.background='#14b8a6';this.style.color='white'" onmouseout="this.style.background='transparent';this.style.color='#14b8a6'">Kies SNS Bank</button>
+        </div>
+      </div>
+
+      <!-- Aegon full width -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm cursor-pointer hover:border-slate-300 transition-all mb-4">
+        <div class="flex items-center justify-between flex-wrap gap-4">
+          <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black text-white" style="background:#0070C0">Aeg</div><div><p class="font-bold text-slate-900">Aegon</p><div class="flex items-center gap-2 mt-0.5"><span class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Periodekorting</span></div></div></div>
+          <div class="flex items-center gap-6">
+            <div class="text-right"><p class="text-2xl font-extrabold text-slate-900">4,05%</p><p class="text-xs text-slate-500">€ 2.299/mnd</p></div>
+            <button class="px-5 py-2.5 rounded-xl font-bold text-sm border-2 transition-all" style="border-color:#14b8a6;color:#14b8a6" onmouseover="this.style.background='#14b8a6';this.style.color='white'" onmouseout="this.style.background='transparent';this.style.color='#14b8a6'">Kies Aegon</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-400">
+        <i class="fa-solid fa-clock mr-2"></i><strong class="text-slate-600">Knab en Triodos</strong> hebben nog niet gereageerd. Aanbiedingen zijn 14 dagen geldig.
+      </div>
+    </div>
+
+  </div>
+</div><!-- end opt-a -->
+
+
+<!-- ====================================================== -->
+<!-- OPTIE B — DOSSIER                                       -->
+<!-- ====================================================== -->
+<div id="opt-b" class="hidden">
+  <div class="max-w-screen-lg mx-auto px-4 py-8">
+
+    <div class="mb-5">
+      <h2 class="text-3xl font-extrabold text-slate-900 mb-1">Uw hypotheekdossier</h2>
+      <p class="text-slate-500">Dossier verzonden naar 8 hypotheekverstrekkers — vergelijk de binnengekomen aanbiedingen.</p>
+    </div>
+
+    <!-- Bedenktijd + taxatie status -->
+    <div class="flex gap-3 mb-6 flex-wrap">
+      <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm shadow-sm">
+        <i class="fa-solid fa-check text-emerald-500"></i>
+        <span class="text-slate-600">Bedenktijd verstreken — <strong>7 mei 2026</strong></span>
+      </div>
+      <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm shadow-sm">
+        <i class="fa-solid fa-check text-emerald-500"></i>
+        <span class="text-slate-600">Taxatie: <strong>AVM — 90% LTV</strong></span>
+      </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6">
+
+      <!-- LEFT: Dossier card -->
+      <div class="lg:w-72 flex-shrink-0 space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-extrabold text-slate-900">Dossier</h3>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#f0fdfa;color:#14b8a6;border:1px solid #99f6e4">Compleet</span>
+          </div>
+          <div class="rounded-xl p-3 mb-4" style="background:#f0fdfa">
+            <p class="text-[10px] font-extrabold uppercase tracking-wide mb-1.5" style="color:#14b8a6">Object</p>
+            <p class="font-extrabold text-slate-900">Talmastraat 26</p>
+            <p class="text-sm text-slate-500 mb-2">1382 TB Weesp</p>
+            <div class="space-y-1 text-sm">
+              <div class="flex justify-between"><span class="text-slate-500">Koopsom</span><span class="font-bold text-slate-900">€ 565.000</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">AVM-waarde</span><span class="font-bold text-slate-900">€ 550.000</span></div>
+              <div class="flex justify-between items-center"><span class="text-slate-500">LTV</span><span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">AVM — 90%</span></div>
+            </div>
+          </div>
+          <div class="space-y-2.5 text-sm">
+            <div class="flex items-center justify-between"><span class="text-slate-500 flex items-center gap-2"><i class="fa-solid fa-user text-slate-200 w-3"></i>Koper</span><span class="font-medium text-slate-900">S. Vermeer</span></div>
+            <div class="flex items-center justify-between"><span class="text-slate-500 flex items-center gap-2"><i class="fa-solid fa-euro-sign text-slate-200 w-3"></i>Inkomen</span><span class="font-medium text-slate-900">€ 78.500/jr <i class="fa-solid fa-check text-emerald-500 text-xs ml-1"></i></span></div>
+            <div class="flex items-center justify-between"><span class="text-slate-500 flex items-center gap-2"><i class="fa-solid fa-id-card text-slate-200 w-3"></i>DigiD</span><span class="font-medium text-emerald-600">Geverifieerd</span></div>
+            <div class="flex items-center justify-between"><span class="text-slate-500 flex items-center gap-2"><i class="fa-solid fa-shield text-slate-200 w-3"></i>BKR</span><span class="font-medium text-emerald-600">Schoon</span></div>
+            <div class="flex items-center justify-between border-t border-slate-100 pt-2.5"><span class="text-slate-500 flex items-center gap-2"><i class="fa-solid fa-building-columns text-slate-200 w-3"></i>Hypotheek</span><span class="font-extrabold text-slate-900">€ 480.000</span></div>
+          </div>
+        </div>
+
+        <!-- Bank status mini -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <h4 class="font-bold text-slate-900 text-sm mb-3">Verstrekkers</h4>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between text-xs"><div class="flex items-center gap-2"><div class="w-5 h-5 rounded flex items-center justify-center font-black text-white text-[9px]" style="background:#00B5AD">Flo</div><span>Florius</span></div><span class="font-bold text-emerald-600 flex items-center gap-1"><i class="fa-solid fa-circle-check text-xs"></i>Bod</span></div>
+            <div class="flex items-center justify-between text-xs"><div class="flex items-center gap-2"><div class="w-5 h-5 rounded flex items-center justify-center font-black text-white text-[9px]" style="background:#FF6200">ING</div><span>ING</span></div><span class="font-bold text-emerald-600 flex items-center gap-1"><i class="fa-solid fa-circle-check text-xs"></i>Bod</span></div>
+            <div class="flex items-center justify-between text-xs"><div class="flex items-center gap-2"><div class="w-5 h-5 rounded flex items-center justify-center font-black text-white text-[9px]" style="background:#004C97">Rabo</div><span>Rabobank</span></div><span class="font-bold text-emerald-600 flex items-center gap-1"><i class="fa-solid fa-circle-check text-xs"></i>Bod</span></div>
+            <div class="flex items-center justify-between text-xs"><div class="flex items-center gap-2"><div class="w-5 h-5 rounded flex items-center justify-center font-black text-white text-[9px]" style="background:#007BC7">ABN</div><span>ABN AMRO</span></div><span class="font-bold text-emerald-600 flex items-center gap-1"><i class="fa-solid fa-circle-check text-xs"></i>Bod</span></div>
+            <div class="flex items-center justify-between text-xs"><div class="flex items-center gap-2"><div class="w-5 h-5 rounded flex items-center justify-center font-black text-white text-[9px]" style="background:#E31E24">SNS</div><span>SNS Bank</span></div><span class="font-bold text-emerald-600 flex items-center gap-1"><i class="fa-solid fa-circle-check text-xs"></i>Bod</span></div>
+            <div class="flex items-center justify-between text-xs"><div class="flex items-center gap-2"><div class="w-5 h-5 rounded flex items-center justify-center font-black text-white text-[9px]" style="background:#0070C0">Aeg</div><span>Aegon</span></div><span class="font-bold text-emerald-600 flex items-center gap-1"><i class="fa-solid fa-circle-check text-xs"></i>Bod</span></div>
+            <div class="flex items-center justify-between text-xs opacity-50"><div class="flex items-center gap-2"><div class="w-5 h-5 rounded flex items-center justify-center font-black text-white text-[9px]" style="background:#6366f1">KNAB</div><span>Knab</span></div><div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-amber-400 animate-pulse-dot"></div><span class="text-slate-400">In behandeling</span></div></div>
+            <div class="flex items-center justify-between text-xs opacity-50"><div class="flex items-center gap-2"><div class="w-5 h-5 rounded flex items-center justify-center font-black text-white text-[9px]" style="background:#22c55e">Trio</div><span>Triodos</span></div><div class="flex items-center gap-1"><div class="w-2 h-2 rounded-full bg-amber-400 animate-pulse-dot"></div><span class="text-slate-400">In behandeling</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Inbox -->
+      <div class="flex-1">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="font-extrabold text-slate-900">Aanbiedingen <span class="text-slate-400 font-normal text-sm">(6)</span></h3>
+            <div class="flex gap-1.5">
+              <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white">Laagste rente</button>
+              <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-50 border border-slate-200 text-slate-500">Maandlast</button>
+            </div>
+          </div>
+          <div class="divide-y divide-slate-100">
+            <!-- Best -->
+            <div class="px-6 py-4 offer-row cursor-pointer" style="background:#f0fdfa">
+              <div class="flex items-center gap-4">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0" style="background:#00B5AD">Flo</div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5 flex-wrap"><p class="font-extrabold text-slate-900">Florius</p><span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white" style="background:#14b8a6">Beste rente</span><span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Groen</span></div>
+                  <p class="text-xs text-slate-400">10 jaar vast · 30 jaar · Reactie: 3 min</p>
+                </div>
+                <div class="text-right flex-shrink-0 mr-3"><p class="text-2xl font-extrabold" style="color:#14b8a6">3,79%</p><p class="text-xs text-slate-500">€ 2.226/mnd</p></div>
+                <button class="px-4 py-2 rounded-xl text-sm font-bold text-white flex-shrink-0" style="background:#14b8a6">Kies <i class="fa-solid fa-arrow-right ml-1 text-xs"></i></button>
+              </div>
+            </div>
+            <div class="px-6 py-4 offer-row cursor-pointer">
+              <div class="flex items-center gap-4">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0" style="background:#FF6200">ING</div>
+                <div class="flex-1"><p class="font-bold text-slate-900 mb-0.5">ING</p><p class="text-xs text-slate-400">10 jaar vast · 30 jaar · Reactie: 8 min</p></div>
+                <div class="text-right flex-shrink-0 mr-3"><p class="text-2xl font-extrabold text-slate-900">3,82%</p><p class="text-xs text-slate-500">€ 2.240/mnd</p></div>
+                <button class="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 border border-slate-200 flex-shrink-0 hover:border-teal-400 transition-all">Kies</button>
+              </div>
+            </div>
+            <div class="px-6 py-4 offer-row cursor-pointer">
+              <div class="flex items-center gap-4">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0" style="background:#004C97">Rabo</div>
+                <div class="flex-1"><div class="flex items-center gap-2 mb-0.5"><p class="font-bold text-slate-900">Rabobank</p><span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Klimaathypotheek</span></div><p class="text-xs text-slate-400">10 jaar vast · 30 jaar · Reactie: 11 min</p></div>
+                <div class="text-right flex-shrink-0 mr-3"><p class="text-2xl font-extrabold text-slate-900">3,88%</p><p class="text-xs text-slate-500">€ 2.256/mnd</p></div>
+                <button class="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 border border-slate-200 flex-shrink-0 hover:border-teal-400 transition-all">Kies</button>
+              </div>
+            </div>
+            <div class="px-6 py-4 offer-row cursor-pointer">
+              <div class="flex items-center gap-4">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0" style="background:#007BC7">ABN</div>
+                <div class="flex-1"><p class="font-bold text-slate-900 mb-0.5">ABN AMRO</p><p class="text-xs text-slate-400">10 jaar vast · 30 jaar · Reactie: 12 min</p></div>
+                <div class="text-right flex-shrink-0 mr-3"><p class="text-2xl font-extrabold text-slate-900">3,91%</p><p class="text-xs text-slate-500">€ 2.263/mnd</p></div>
+                <button class="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 border border-slate-200 flex-shrink-0 hover:border-teal-400 transition-all">Kies</button>
+              </div>
+            </div>
+            <div class="px-6 py-4 offer-row cursor-pointer">
+              <div class="flex items-center gap-4">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0" style="background:#E31E24">SNS</div>
+                <div class="flex-1"><p class="font-bold text-slate-900 mb-0.5">SNS Bank</p><p class="text-xs text-slate-400">10 jaar vast · 30 jaar · Reactie: 6 min</p></div>
+                <div class="text-right flex-shrink-0 mr-3"><p class="text-2xl font-extrabold text-slate-900">4,01%</p><p class="text-xs text-slate-500">€ 2.290/mnd</p></div>
+                <button class="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 border border-slate-200 flex-shrink-0 hover:border-teal-400 transition-all">Kies</button>
+              </div>
+            </div>
+            <div class="px-6 py-4 offer-row cursor-pointer">
+              <div class="flex items-center gap-4">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0" style="background:#0070C0">Aeg</div>
+                <div class="flex-1"><div class="flex items-center gap-2 mb-0.5"><p class="font-bold text-slate-900">Aegon</p><span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">Periodekorting</span></div><p class="text-xs text-slate-400">10 jaar vast · 30 jaar · Reactie: 18 min</p></div>
+                <div class="text-right flex-shrink-0 mr-3"><p class="text-2xl font-extrabold text-slate-900">4,05%</p><p class="text-xs text-slate-500">€ 2.299/mnd</p></div>
+                <button class="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 border border-slate-200 flex-shrink-0 hover:border-teal-400 transition-all">Kies</button>
+              </div>
+            </div>
+            <div class="px-6 py-4 opacity-40">
+              <div class="flex items-center gap-4">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0" style="background:#6366f1">KNAB</div>
+                <div class="flex-1"><p class="font-bold text-slate-400 mb-0.5">Knab</p><p class="text-xs text-slate-400">Aanbieding verwacht...</p></div>
+                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-amber-400 animate-pulse-dot"></div><span class="text-xs text-slate-400">In behandeling</span></div>
+              </div>
+            </div>
+            <div class="px-6 py-4 opacity-40">
+              <div class="flex items-center gap-4">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0" style="background:#22c55e">Trio</div>
+                <div class="flex-1"><p class="font-bold text-slate-400 mb-0.5">Triodos</p><p class="text-xs text-slate-400">Aanbieding verwacht...</p></div>
+                <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-amber-400 animate-pulse-dot"></div><span class="text-xs text-slate-400">In behandeling</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- end opt-b -->
+
+
+<!-- ====================================================== -->
+<!-- OPTIE C — DASHBOARD                                     -->
+<!-- ====================================================== -->
+<div id="opt-c" class="hidden">
+  <div class="max-w-screen-xl mx-auto px-4 py-6 flex gap-5">
+
+    <!-- LEFT: Timeline -->
+    <div class="w-52 flex-shrink-0 hidden lg:block">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm sticky top-24">
+        <h3 class="font-extrabold text-slate-900 text-sm mb-5">Voortgang</h3>
+        <div class="relative">
+          <div class="absolute left-3 top-3 bottom-3 w-0.5" style="background:linear-gradient(to bottom,#14b8a6 55%,#e2e8f0 55%)"></div>
+          <div class="space-y-5">
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 relative z-10" style="background:#14b8a6"><i class="fa-solid fa-check text-white text-[9px]"></i></div>
+              <div><p class="text-xs font-bold text-slate-700">Bod geaccepteerd</p><p class="text-[10px] text-slate-400">2 mei 2026</p></div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 relative z-10" style="background:#14b8a6"><i class="fa-solid fa-check text-white text-[9px]"></i></div>
+              <div><p class="text-xs font-bold text-slate-700">Bedenktijd</p><p class="text-[10px] text-slate-400">Verstreken 7 mei</p></div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 relative z-10" style="background:#14b8a6"><i class="fa-solid fa-check text-white text-[9px]"></i></div>
+              <div><p class="text-xs font-bold text-slate-700">Taxatie AVM</p><p class="text-[10px] text-slate-400">90% LTV</p></div>
+            </div>
+            <div class="flex items-start gap-3">
+              <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 relative z-10 ring-2 ring-offset-1" style="background:#14b8a6;ring-color:#14b8a6;outline:2px solid #14b8a6;outline-offset:2px"><i class="fa-solid fa-building-columns text-white text-[9px]"></i></div>
+              <div><p class="text-xs font-extrabold" style="color:#14b8a6">Hypotheekkeuze</p><p class="text-[10px]" style="color:#0d9488">6 aanbiedingen</p></div>
+            </div>
+            <div class="flex items-start gap-3 opacity-35">
+              <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 relative z-10"><i class="fa-solid fa-file-signature text-slate-400 text-[9px]"></i></div>
+              <div><p class="text-xs font-bold text-slate-400">Koopakte</p></div>
+            </div>
+            <div class="flex items-start gap-3 opacity-35">
+              <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 relative z-10"><i class="fa-solid fa-pen text-slate-400 text-[9px]"></i></div>
+              <div><p class="text-xs font-bold text-slate-400">Ondertekening</p></div>
+            </div>
+            <div class="flex items-start gap-3 opacity-35">
+              <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 relative z-10"><i class="fa-solid fa-key text-slate-400 text-[9px]"></i></div>
+              <div><p class="text-xs font-bold text-slate-400">Overdracht</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MIDDLE: Offers -->
+    <div class="flex-1 min-w-0">
+      <div class="flex items-start justify-between mb-5 flex-wrap gap-3">
+        <div>
+          <h2 class="text-2xl font-extrabold text-slate-900 mb-1">Hypotheekaanbiedingen</h2>
+          <p class="text-sm text-slate-500">6 van 8 banken hebben gereageerd. Geldig tot 21 mei 2026.</p>
+        </div>
+        <div class="flex gap-1.5">
+          <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white">Rente</button>
+          <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-500 hover:bg-slate-50">Maandlast</button>
+          <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-500 hover:bg-slate-50">Snelheid</button>
+        </div>
+      </div>
+
+      <!-- Featured row -->
+      <div class="rounded-2xl border-2 p-5 mb-3 flex items-center gap-4 flex-wrap" style="border-color:#14b8a6;background:#f0fdfa">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0" style="background:#00B5AD">Flo</div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1 flex-wrap"><p class="font-extrabold text-slate-900">Florius</p><span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white" style="background:#14b8a6">Beste rente</span><span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Groen hypotheek</span></div>
+          <p class="text-xs text-slate-500">10 jaar vast · 30 jaar looptijd · Reactie: 3 min</p>
+        </div>
+        <div class="text-right flex-shrink-0"><p class="text-3xl font-extrabold" style="color:#14b8a6">3,79%</p><p class="text-sm text-slate-500">€ 2.226/mnd</p></div>
+        <button class="px-5 py-3 rounded-xl font-bold text-white text-sm shadow-md flex-shrink-0" style="background:#14b8a6">Kies Florius <i class="fa-solid fa-arrow-right ml-1"></i></button>
+      </div>
+
+      <!-- Compact table -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-3">
+        <div class="divide-y divide-slate-100">
+          <div class="px-5 py-3.5 flex items-center gap-4 offer-row cursor-pointer">
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center text-[10px] font-black text-white flex-shrink-0" style="background:#FF6200">ING</div>
+            <span class="font-semibold text-slate-900 flex-1">ING</span>
+            <span class="text-xs text-slate-400 hidden sm:block">10j vast</span>
+            <span class="font-extrabold text-slate-900 w-14 text-right">3,82%</span>
+            <span class="text-sm text-slate-500 w-24 text-right hidden md:block">€ 2.240/mnd</span>
+            <button class="ml-2 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-teal-400 transition-all flex-shrink-0">Kies</button>
+          </div>
+          <div class="px-5 py-3.5 flex items-center gap-4 offer-row cursor-pointer">
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center text-[10px] font-black text-white flex-shrink-0" style="background:#004C97">Rabo</div>
+            <div class="flex-1 flex items-center gap-2"><span class="font-semibold text-slate-900">Rabobank</span><span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 hidden sm:inline">Klimaat</span></div>
+            <span class="text-xs text-slate-400 hidden sm:block">10j vast</span>
+            <span class="font-extrabold text-slate-900 w-14 text-right">3,88%</span>
+            <span class="text-sm text-slate-500 w-24 text-right hidden md:block">€ 2.256/mnd</span>
+            <button class="ml-2 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-teal-400 transition-all flex-shrink-0">Kies</button>
+          </div>
+          <div class="px-5 py-3.5 flex items-center gap-4 offer-row cursor-pointer">
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center text-[10px] font-black text-white flex-shrink-0" style="background:#007BC7">ABN</div>
+            <span class="font-semibold text-slate-900 flex-1">ABN AMRO</span>
+            <span class="text-xs text-slate-400 hidden sm:block">10j vast</span>
+            <span class="font-extrabold text-slate-900 w-14 text-right">3,91%</span>
+            <span class="text-sm text-slate-500 w-24 text-right hidden md:block">€ 2.263/mnd</span>
+            <button class="ml-2 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-teal-400 transition-all flex-shrink-0">Kies</button>
+          </div>
+          <div class="px-5 py-3.5 flex items-center gap-4 offer-row cursor-pointer">
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center text-[10px] font-black text-white flex-shrink-0" style="background:#E31E24">SNS</div>
+            <span class="font-semibold text-slate-900 flex-1">SNS Bank</span>
+            <span class="text-xs text-slate-400 hidden sm:block">10j vast</span>
+            <span class="font-extrabold text-slate-900 w-14 text-right">4,01%</span>
+            <span class="text-sm text-slate-500 w-24 text-right hidden md:block">€ 2.290/mnd</span>
+            <button class="ml-2 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-teal-400 transition-all flex-shrink-0">Kies</button>
+          </div>
+          <div class="px-5 py-3.5 flex items-center gap-4 offer-row cursor-pointer">
+            <div class="w-9 h-9 rounded-lg flex items-center justify-center text-[10px] font-black text-white flex-shrink-0" style="background:#0070C0">Aeg</div>
+            <div class="flex-1 flex items-center gap-2"><span class="font-semibold text-slate-900">Aegon</span><span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 hidden sm:inline">Periodekorting</span></div>
+            <span class="text-xs text-slate-400 hidden sm:block">10j vast</span>
+            <span class="font-extrabold text-slate-900 w-14 text-right">4,05%</span>
+            <span class="text-sm text-slate-500 w-24 text-right hidden md:block">€ 2.299/mnd</span>
+            <button class="ml-2 px-3 py-1.5 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:border-teal-400 transition-all flex-shrink-0">Kies</button>
+          </div>
+        </div>
+      </div>
+      <p class="text-xs text-slate-400 text-center"><i class="fa-solid fa-clock mr-1"></i>Knab en Triodos hebben nog niet gereageerd.</p>
+    </div>
+
+    <!-- RIGHT: Deal card -->
+    <div class="w-56 flex-shrink-0 hidden xl:block">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm sticky top-24 space-y-4">
+        <div>
+          <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide mb-2">Object</p>
+          <p class="font-extrabold text-slate-900 text-sm">Talmastraat 26</p>
+          <p class="text-xs text-slate-500 mb-2">1382 TB Weesp</p>
+          <div class="space-y-1.5 text-xs">
+            <div class="flex justify-between"><span class="text-slate-400">Koopsom</span><span class="font-bold text-slate-900">€ 565.000</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">AVM-waarde</span><span class="font-bold text-slate-900">€ 550.000</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">Hypotheek</span><span class="font-bold text-slate-900">€ 480.000</span></div>
+          </div>
+        </div>
+        <div class="border-t border-slate-100 pt-4">
+          <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide mb-2">Taxatie</p>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">AVM — 90% LTV</span>
+          <p class="text-[10px] text-slate-400 mt-1">Max. hypotheek: € 495.000</p>
+        </div>
+        <div class="border-t border-slate-100 pt-4">
+          <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide mb-2">Koper</p>
+          <div class="space-y-1.5 text-xs">
+            <div class="flex justify-between"><span class="text-slate-400">Naam</span><span class="font-bold text-slate-900">S. Vermeer</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">Inkomen</span><span class="font-bold text-slate-900">€ 78.500</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">DigiD</span><span class="font-bold text-emerald-600">✓ Verified</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">BKR</span><span class="font-bold text-emerald-600">Schoon</span></div>
+          </div>
+        </div>
+        <div class="border-t border-slate-100 pt-4">
+          <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wide mb-1.5">Status</p>
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full animate-pulse-dot flex-shrink-0" style="background:#14b8a6"></div>
+            <span class="text-xs font-bold" style="color:#14b8a6">Wacht op keuze</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- end opt-c -->
+
+
+<script>
+  function switchOpt(opt) {
+    ['a','b','c'].forEach(o => {
+      document.getElementById('opt-' + o).classList.add('hidden');
+      const t = document.getElementById('tab-' + o);
+      t.style.background = 'transparent';
+      t.style.boxShadow = 'none';
+      t.style.color = '#64748b';
+    });
+    document.getElementById('opt-' + opt).classList.remove('hidden');
+    const active = document.getElementById('tab-' + opt);
+    active.style.background = 'white';
+    active.style.boxShadow = '0 1px 3px rgba(0,0,0,.1)';
+    active.style.color = '#0f172a';
+    window.scrollTo(0, 0);
+  }
+
+  function wStep(s) {
+    [1,2,3,4].forEach(i => {
+      const el = document.getElementById('ws' + i);
+      if (el) el.classList.add('hidden');
+    });
+    const t = document.getElementById('ws' + s);
+    if (t) t.classList.remove('hidden');
+
+    // Update stepper visuals
+    [1,2,3,4].forEach(i => {
+      const dot = document.getElementById('d' + i);
+      const lbl = document.getElementById('l' + i);
+      if (!dot) return;
+      if (i < s) {
+        dot.style.background = '#14b8a6'; dot.innerHTML = '<i class="fa-solid fa-check text-xs"></i>';
+        if (lbl) { lbl.style.color = '#14b8a6'; lbl.style.fontWeight = '600'; }
+      } else if (i === s) {
+        dot.style.background = '#14b8a6'; dot.innerHTML = i;
+        dot.style.outline = '2px solid #14b8a6'; dot.style.outlineOffset = '2px';
+        if (lbl) { lbl.style.color = '#14b8a6'; lbl.style.fontWeight = '800'; }
+      } else {
+        dot.style.background = '#f1f5f9'; dot.style.color = '#94a3b8'; dot.style.outline = 'none'; dot.innerHTML = i;
+        if (lbl) { lbl.style.color = '#94a3b8'; lbl.style.fontWeight = '500'; }
+      }
+    });
+    // Update connectors
+    [12,23,34].forEach(pair => {
+      const c = document.getElementById('c' + pair);
+      if (!c) return;
+      const from = Math.floor(pair / 10), to = pair % 10;
+      c.classList.toggle('done', s > from);
+    });
+    window.scrollTo(0, 0);
+  }
+
+  function selectTax(type) {
+    const avm = document.getElementById('tax-avm');
+    const fys = document.getElementById('tax-fysiek');
+    if (type === 'avm') {
+      avm.style.borderColor = '#14b8a6';
+      fys.style.borderColor = '#e2e8f0';
+      avm.querySelector('div:last-child').innerHTML = '<i class="fa-solid fa-check mr-2"></i>Geselecteerd';
+      avm.querySelector('div:last-child').style.background = '#14b8a6';
+      fys.querySelector('div:last-child').textContent = 'Kies fysieke taxatie';
+      fys.querySelector('div:last-child').style.background = '';
+    } else {
+      fys.style.borderColor = '#14b8a6';
+      avm.style.borderColor = '#e2e8f0';
+      fys.querySelector('div:last-child').innerHTML = '<i class="fa-solid fa-check mr-2"></i>Geselecteerd';
+      fys.querySelector('div:last-child').style.background = '#14b8a6';
+      fys.querySelector('div:last-child').style.color = 'white';
+      avm.querySelector('div:last-child').textContent = 'Kies AVM-taxatie';
+    }
+  }
+
+  // Init: show wizard step 4 (most interesting view)
+  wStep(4);
+</script>
+</body>
+</html>
